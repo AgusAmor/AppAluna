@@ -6,6 +6,7 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import {
@@ -14,6 +15,8 @@ import {
   useUserEdit,
   useAddressEdit,
   useUserActions,
+  useModalTransitions,
+  useModalReopenLogic,
 } from "../hooks/screens";
 import { formatUserStatus, formatUserRole } from "../services/users";
 import {
@@ -21,6 +24,7 @@ import {
   UserEditModal,
   AddressEditModal,
 } from "../components/modals";
+import { useThemeColors, fonts } from "../theme";
 
 /**
  * UsersScreen
@@ -35,6 +39,9 @@ import {
  * - useUserActions: User actions (delete, status change, logout)
  */
 const UsersScreen = ({ navigation }) => {
+  const { colorScheme } = useThemeColors();
+  const styles = createStyles(colorScheme);
+
   // Data management hooks
   const { users, memoizedUsers, loading, error, loadMore, hasMore } =
     useUsersList();
@@ -43,6 +50,11 @@ const UsersScreen = ({ navigation }) => {
     showDetailsModal,
     openDetailsModal,
     closeDetailsModal,
+    setSelectedUserOnly,
+    shouldReopenDetailsOnEditClose,
+    setReopenDetailsFlag,
+    setShouldReopenDetailsOnEditClose,
+    clearSelectedUser,
   } = useUserModal();
   const {
     editForm,
@@ -72,6 +84,34 @@ const UsersScreen = ({ navigation }) => {
     handleLogout,
   } = useUserActions();
 
+  // Modal transition handlers
+  const {
+    handleTransitionToEditModal,
+    handleTransitionToAddressModal,
+    handleTransitionToAddAddressModal,
+    handleTransitionAddressToEdit,
+  } = useModalTransitions(
+    showDetailsModal,
+    closeDetailsModal,
+    openEditModal,
+    setSelectedUserOnly,
+    setReopenDetailsFlag,
+    setShouldReopenDetailsOnEditClose,
+    closeEditModal,
+    openEditAddressModal,
+    openAddAddressModal,
+    closeAddressEditModal,
+  );
+
+  // Modal reopen logic handlers
+  const { handleEditModalClose, handleDetailsModalClose } = useModalReopenLogic(
+    closeEditModal,
+    openDetailsModal,
+    setShouldReopenDetailsOnEditClose,
+    clearSelectedUser,
+    closeDetailsModal,
+  );
+
   /**
    * Format timestamp for display
    */
@@ -86,29 +126,34 @@ const UsersScreen = ({ navigation }) => {
   }, []);
 
   /**
-   * Handle edit user - opens edit modal with user data
+   * Wrapper for edit user - transitions to edit modal with origin tracking
    */
   const handleEditUserWrapper = useCallback(
-    (userItem) => {
-      openEditModal(userItem);
-      closeDetailsModal();
+    (item) => {
+      handleTransitionToEditModal(item);
     },
-    [openEditModal, closeDetailsModal],
+    [handleTransitionToEditModal],
   );
 
   /**
-   * Handle edit address - opens address edit modal
+   * Wrapper for edit address - transitions to address edit modal
    */
   const handleEditAddressWrapper = useCallback(
     (index) => {
-      openEditAddressModal(index, editForm.addresses[index]);
-      closeEditModal();
+      handleTransitionToAddressModal(index, editForm.addresses[index]);
     },
-    [openEditAddressModal, closeEditModal, editForm.addresses],
+    [handleTransitionToAddressModal, editForm.addresses],
   );
 
   /**
-   * Handle delete address - removes address from list
+   * Wrapper for add address - transitions to add address modal
+   */
+  const handleAddAddressWrapper = useCallback(() => {
+    handleTransitionToAddAddressModal(editForm.addresses);
+  }, [handleTransitionToAddAddressModal, editForm.addresses]);
+
+  /**
+   * Wrapper for delete address - removes address from list
    */
   const handleDeleteAddressWrapper = useCallback(
     (index) => {
@@ -118,26 +163,24 @@ const UsersScreen = ({ navigation }) => {
   );
 
   /**
-   * Handle add address - opens modal to add new address
-   */
-  const handleAddAddressWrapper = useCallback(() => {
-    openAddAddressModal(editForm.addresses);
-    closeEditModal();
-  }, [openAddAddressModal, closeEditModal, editForm.addresses]);
-
-  /**
-   * Handle save address - validates and saves address changes
+   * Wrapper for save address - validates and saves address changes
    */
   const handleSaveAddressWrapper = useCallback(() => {
     handleSaveAddress(editForm.addresses, setEditForm);
   }, [handleSaveAddress, editForm.addresses, setEditForm]);
 
   /**
-   * Handle save user - saves user changes to database
+   * Wrapper for save user - saves changes and manages modal transitions
    */
   const handleSaveUserWrapper = useCallback(async () => {
     await handleSaveUser(selectedUser?.id);
-  }, [handleSaveUser, selectedUser?.id]);
+    handleEditModalClose(selectedUser, shouldReopenDetailsOnEditClose);
+  }, [
+    handleSaveUser,
+    selectedUser,
+    handleEditModalClose,
+    shouldReopenDetailsOnEditClose,
+  ]);
 
   // Render user item in list
   const renderUserItem = useCallback(
@@ -179,7 +222,7 @@ const UsersScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {actioningUserId === item.id ? (
-            <ActivityIndicator size="small" color="#3B82F6" />
+            <ActivityIndicator size="small" color={colorScheme.primary} />
           ) : (
             <TouchableOpacity
               style={[
@@ -212,7 +255,7 @@ const UsersScreen = ({ navigation }) => {
   if (loading) {
     return (
       <ScreenContainer>
-        <ActivityIndicator size="large" color="#3B82F6" />
+        <ActivityIndicator size="large" color={colorScheme.primary} />
       </ScreenContainer>
     );
   }
@@ -248,7 +291,7 @@ const UsersScreen = ({ navigation }) => {
           ListFooterComponent={
             hasMore ? (
               <View style={styles.loadMoreContainer}>
-                <ActivityIndicator size="small" color="#3B82F6" />
+                <ActivityIndicator size="small" color={colorScheme.primary} />
                 <Text style={styles.loadMoreText}>
                   Cargando más usuarios...
                 </Text>
@@ -265,9 +308,13 @@ const UsersScreen = ({ navigation }) => {
       {/* User Details Modal */}
       <UserDetailsModal
         visible={showDetailsModal}
-        onClose={closeDetailsModal}
+        onClose={() => handleDetailsModalClose(shouldReopenDetailsOnEditClose)}
         user={selectedUser}
-        onEdit={() => handleEditUserWrapper(selectedUser)}
+        onEdit={() => {
+          if (selectedUser) {
+            handleTransitionToEditModal(selectedUser);
+          }
+        }}
         formatDate={formatDate}
         formatUserStatus={formatUserStatus}
         formatUserRole={formatUserRole}
@@ -276,7 +323,9 @@ const UsersScreen = ({ navigation }) => {
       {/* User Edit Modal */}
       <UserEditModal
         visible={showEditModal}
-        onClose={closeEditModal}
+        onClose={() =>
+          handleEditModalClose(selectedUser, shouldReopenDetailsOnEditClose)
+        }
         user={selectedUser}
         editForm={editForm}
         onFormChange={setEditForm}
@@ -290,10 +339,7 @@ const UsersScreen = ({ navigation }) => {
       {/* Address Edit Modal */}
       <AddressEditModal
         visible={showAddressEditModal}
-        onClose={() => {
-          closeAddressEditModal();
-          openEditModal(selectedUser);
-        }}
+        onClose={() => handleTransitionAddressToEdit(selectedUser)}
         isNew={isNewAddress}
         address={editingAddress}
         onAddressChange={setEditingAddress}
@@ -303,136 +349,140 @@ const UsersScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1F2937",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 16,
-  },
-  errorBox: {
-    backgroundColor: "#FEE2E2",
-    borderColor: "#FCA5A5",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: "#DC2626",
-    fontSize: 14,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "#6B7280",
-  },
-  usersList: {
-    gap: 12,
-    paddingBottom: 20,
-  },
-  userCard: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
-    padding: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderLeftWidth: 4,
-    borderLeftColor: "#3B82F6",
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  userEmail: {
-    fontSize: 14,
-    color: "#3B82F6",
-    marginTop: 4,
-  },
-  userMeta: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 6,
-    alignItems: "center",
-  },
-  userMetaText: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  userStatus: {
-    fontSize: 12,
-    fontWeight: "600",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  statusActive: {
-    backgroundColor: "#D1FAE5",
-    color: "#065F46",
-  },
-  statusSuspended: {
-    backgroundColor: "#FEE2E2",
-    color: "#991B1B",
-  },
-  userActions: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionButtonEmoji: {
-    fontSize: 18,
-  },
-  suspendButton: {
-    backgroundColor: "#FEE2E2",
-  },
-  activateButton: {
-    backgroundColor: "#D1FAE5",
-  },
-  logoutButton: {
-    backgroundColor: "#DC2626",
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  logoutText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  loadMoreContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    gap: 8,
-  },
-  loadMoreText: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-});
+const createStyles = (colorScheme) =>
+  StyleSheet.create({
+    title: {
+      ...fonts.heading.h2,
+      color: colorScheme.text,
+      marginBottom: 4,
+    },
+    subtitle: {
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
+      marginBottom: 16,
+    },
+    errorBox: {
+      backgroundColor: `${colorScheme.error}20`,
+      borderColor: colorScheme.error,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 16,
+    },
+    errorText: {
+      color: colorScheme.error,
+      fontSize: 14,
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    emptyText: {
+      fontSize: 16,
+      color: colorScheme.textLight,
+    },
+    usersList: {
+      gap: 12,
+      paddingBottom: 20,
+    },
+    userCard: {
+      backgroundColor: colorScheme.backgroundLight2,
+      borderRadius: 8,
+      padding: 12,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderLeftWidth: 4,
+      borderLeftColor: colorScheme.primary,
+    },
+    userInfo: {
+      flex: 1,
+    },
+    userName: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colorScheme.text,
+    },
+    userEmail: {
+      fontSize: 14,
+      color: colorScheme.primary,
+      marginTop: 4,
+    },
+    userMeta: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 6,
+      alignItems: "center",
+    },
+    userMetaText: {
+      fontSize: 12,
+      color: colorScheme.textLight,
+    },
+    userStatus: {
+      fontSize: 12,
+      fontWeight: "600",
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    statusActive: {
+      backgroundColor: colorScheme.success,
+      color: colorScheme.background,
+    },
+    statusSuspended: {
+      backgroundColor: colorScheme.error,
+      color: colorScheme.background,
+    },
+    userActions: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+    },
+    actionButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: colorScheme.backgroundLight,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+    },
+    actionButtonEmoji: {
+      fontSize: 18,
+    },
+    suspendButton: {
+      backgroundColor: `${colorScheme.error}25`,
+      borderColor: colorScheme.error,
+    },
+    activateButton: {
+      backgroundColor: `${colorScheme.success}25`,
+      borderColor: colorScheme.success,
+    },
+    logoutButton: {
+      backgroundColor: colorScheme.error,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginTop: 16,
+    },
+    logoutText: {
+      color: colorScheme.background,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    loadMoreContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 16,
+      gap: 8,
+    },
+    loadMoreText: {
+      fontSize: 14,
+      color: colorScheme.textLight,
+    },
+  });
 
 export default UsersScreen;

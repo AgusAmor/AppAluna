@@ -2,9 +2,12 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
+import { useThemeColors, fonts } from "../theme";
 
 const ProductsScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
+  const { colorScheme } = useThemeColors();
+  const styles = createStyles(colorScheme);
 
   const handleLogout = async () => {
     try {
@@ -33,48 +36,48 @@ const ProductsScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1F2937",
-    marginBottom: 8,
-  },
-  email: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 32,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  placeholderText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 8,
-  },
-  placeholderSubtext: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  logoutButton: {
-    backgroundColor: "#DC2626",
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  logoutText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
+const createStyles = (colorScheme) =>
+  StyleSheet.create({
+    title: {
+      ...fonts.heading.h2,
+      color: colorScheme.text,
+      marginBottom: 8,
+    },
+    email: {
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
+      marginBottom: 32,
+    },
+    placeholder: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colorScheme.backgroundLight2,
+      borderRadius: 12,
+      marginBottom: 20,
+    },
+    placeholderText: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colorScheme.text,
+      marginBottom: 8,
+    },
+    placeholderSubtext: {
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
+    },
+    logoutButton: {
+      backgroundColor: colorScheme.error,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    logoutText: {
+      color: colorScheme.background,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+  });
 
 export default ProductsScreen;

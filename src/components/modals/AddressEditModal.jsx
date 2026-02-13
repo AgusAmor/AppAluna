@@ -11,6 +11,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from "react-native";
+import { useThemeColors, fonts } from "../../theme";
 
 /**
  * AddressEditModal
@@ -24,6 +25,9 @@ const AddressEditModal = ({
   onAddressChange,
   onSave,
 }) => {
+  const { colorScheme } = useThemeColors();
+  const styles = createStyles(colorScheme);
+
   if (!address) return null;
 
   return (
@@ -172,124 +176,125 @@ const AddressEditModal = ({
   );
 };
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    maxHeight: "90%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  closeButton: {
-    fontSize: 24,
-    color: "#6B7280",
-    fontWeight: "600",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1F2937",
-    marginBottom: 0,
-  },
-  formContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    marginBottom: 16,
-    color: "#1F2937",
-  },
-  defaultCheckbox: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: "#D1D5DB",
-    borderRadius: 4,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  checkboxChecked: {
-    backgroundColor: "#3B82F6",
-    borderColor: "#3B82F6",
-  },
-  checkboxText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  defaultCheckboxLabel: {
-    fontSize: 14,
-    color: "#1F2937",
-    fontWeight: "500",
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#1F2937",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: "#3B82F6",
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  iosContainer: {
-    backgroundColor: "transparent",
-  },
-  iosContent: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-});
+const createStyles = (colorScheme) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "flex-end",
+    },
+    modalContent: {
+      backgroundColor: colorScheme.background,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 20,
+      maxHeight: "90%",
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    closeButton: {
+      fontSize: 24,
+      color: colorScheme.textLight,
+      fontWeight: "600",
+    },
+    modalTitle: {
+      ...fonts.heading.h2,
+      color: colorScheme.text,
+      marginBottom: 0,
+    },
+    formContainer: {
+      marginBottom: 20,
+    },
+    label: {
+      ...fonts.body.sm,
+      color: colorScheme.text,
+      marginBottom: 6,
+      fontWeight: "600",
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 14,
+      marginBottom: 16,
+      color: colorScheme.text,
+      backgroundColor: colorScheme.backgroundLight,
+    },
+    defaultCheckbox: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      marginTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colorScheme.border,
+    },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderWidth: 2,
+      borderColor: colorScheme.border,
+      borderRadius: 4,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 10,
+    },
+    checkboxChecked: {
+      backgroundColor: colorScheme.primary,
+      borderColor: colorScheme.primary,
+    },
+    checkboxText: {
+      color: colorScheme.background,
+      fontSize: 14,
+      fontWeight: "bold",
+    },
+    defaultCheckboxLabel: {
+      fontSize: 14,
+      color: colorScheme.text,
+      fontWeight: "500",
+    },
+    modalActions: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    cancelButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+      alignItems: "center",
+    },
+    cancelButtonText: {
+      color: colorScheme.text,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    saveButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      backgroundColor: colorScheme.primary,
+      alignItems: "center",
+    },
+    saveButtonText: {
+      color: colorScheme.background,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    iosContainer: {
+      backgroundColor: "transparent",
+    },
+    iosContent: {
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
+    },
+  });
 
 export default AddressEditModal;

@@ -7,6 +7,7 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
+import { useThemeColors, fonts } from "../../theme";
 
 /**
  * UserDetailsModal
@@ -21,6 +22,9 @@ const UserDetailsModal = ({
   formatUserStatus,
   formatUserRole,
 }) => {
+  const { colorScheme } = useThemeColors();
+  const styles = createStyles(colorScheme);
+
   if (!user) return null;
 
   return (
@@ -135,97 +139,96 @@ const UserDetailsModal = ({
   );
 };
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    maxHeight: "90%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1F2937",
-  },
-  closeButton: {
-    fontSize: 24,
-    color: "#6B7280",
-    fontWeight: "bold",
-  },
-  detailsContainer: {
-    marginBottom: 16,
-  },
-  detailSection: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#6B7280",
-    marginBottom: 4,
-    textTransform: "uppercase",
-  },
-  detailValue: {
-    fontSize: 16,
-    color: "#1F2937",
-    fontWeight: "500",
-  },
-  statusActive: {
-    color: "#065F46",
-  },
-  statusSuspended: {
-    color: "#991B1B",
-  },
-  addressText: {
-    fontSize: 14,
-    color: "#374151",
-    marginTop: 4,
-    paddingLeft: 8,
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#1F2937",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  editButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: "#F59E0B",
-    alignItems: "center",
-  },
-  editButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-});
+const createStyles = (colorScheme) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "flex-end",
+    },
+    modalContent: {
+      backgroundColor: colorScheme.background,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 20,
+      maxHeight: "90%",
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    modalTitle: {
+      ...fonts.heading.h2,
+      color: colorScheme.text,
+    },
+    closeButton: {
+      fontSize: 24,
+      color: colorScheme.textLight,
+      fontWeight: "bold",
+    },
+    detailsContainer: {
+      marginBottom: 16,
+    },
+    detailSection: {
+      marginBottom: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.border,
+    },
+    detailLabel: {
+      ...fonts.body.xs,
+      color: colorScheme.textLight,
+      marginBottom: 4,
+      textTransform: "uppercase",
+    },
+    detailValue: {
+      fontSize: 16,
+      color: colorScheme.text,
+      fontWeight: "500",
+    },
+    statusActive: {
+      color: colorScheme.success,
+    },
+    statusSuspended: {
+      color: colorScheme.error,
+    },
+    addressText: {
+      fontSize: 14,
+      color: colorScheme.textLight,
+      marginTop: 4,
+      paddingLeft: 8,
+    },
+    modalActions: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    cancelButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+      alignItems: "center",
+    },
+    cancelButtonText: {
+      color: colorScheme.text,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    editButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      backgroundColor: colorScheme.accent,
+      alignItems: "center",
+    },
+    editButtonText: {
+      color: colorScheme.background,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+  });
 
 export default UserDetailsModal;

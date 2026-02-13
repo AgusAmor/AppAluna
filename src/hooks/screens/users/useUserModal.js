@@ -1,8 +1,22 @@
 /**
  * useUserModal.js
  * Custom hook for managing user details modal state and selection
- * Handles: showing/hiding details modal, selecting/clearing user
- * Returns: selectedUser, showDetailsModal, openDetailsModal(), closeDetailsModal()
+ * 
+ * Handles:
+ * - Showing/hiding details modal
+ * - Selecting/clearing user
+ * - Tracking modal navigation flow (details to edit transitions)
+ * 
+ * Returns:
+ * - selectedUser: Currently selected user object
+ * - showDetailsModal: Boolean for details modal visibility
+ * - openDetailsModal(userItem): Open details modal with user data
+ * - closeDetailsModal(): Close details modal
+ * - setSelectedUserOnly(userItem): Set user without opening modal
+ * - shouldReopenDetailsOnEditClose: Flag to reopen details after edit close
+ * - setReopenDetailsFlag(): Mark details for reopening
+ * - setShouldReopenDetailsOnEditClose(bool): Set reopen flag
+ * - clearSelectedUser(): Clear user and reset flag
  */
 
 import { useState, useCallback } from "react";
@@ -10,6 +24,7 @@ import { useState, useCallback } from "react";
 export function useUserModal() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [shouldReopenDetailsOnEditClose, setShouldReopenDetailsOnEditClose] = useState(false);
 
   const openDetailsModal = useCallback((userItem) => {
     setSelectedUser(userItem);
@@ -18,8 +33,21 @@ export function useUserModal() {
 
   const closeDetailsModal = useCallback(() => {
     setShowDetailsModal(false);
-    // Clear selected user after animation
-    setTimeout(() => setSelectedUser(null), 200);
+    // Only clear selected user if not reopening on edit close
+    // The flag will be checked to decide if we should clear
+  }, []);
+
+  const setSelectedUserOnly = useCallback((userItem) => {
+    setSelectedUser(userItem);
+  }, []);
+
+  const setReopenDetailsFlag = useCallback(() => {
+    setShouldReopenDetailsOnEditClose(true);
+  }, []);
+
+  const clearSelectedUser = useCallback(() => {
+    setShouldReopenDetailsOnEditClose(false);
+    setSelectedUser(null);
   }, []);
 
   return {
@@ -27,5 +55,10 @@ export function useUserModal() {
     showDetailsModal,
     openDetailsModal,
     closeDetailsModal,
+    setSelectedUserOnly,
+    shouldReopenDetailsOnEditClose,
+    setReopenDetailsFlag,
+    setShouldReopenDetailsOnEditClose,
+    clearSelectedUser,
   };
 }

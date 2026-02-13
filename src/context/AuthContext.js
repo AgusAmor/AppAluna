@@ -27,8 +27,6 @@ export const AuthProvider = ({ children }) => {
           const idTokenResult = await currentUser.getIdTokenResult();
           const isAdmin = idTokenResult.claims.admin === true;
 
-          console.log("User:", currentUser.email, "Is Admin:", isAdmin);
-
           // Fetch user document for additional info
           const userDocRef = doc(firestore, "users", currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);

@@ -2,9 +2,12 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
+import { useThemeColors, fonts } from "../theme";
 
 const HomeScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
+  const { colorScheme } = useThemeColors();
+  const styles = createStyles(colorScheme);
 
   const handleLogout = async () => {
     try {
@@ -15,7 +18,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <ScreenContainer backgroundColor="#F3F4F6">
+    <ScreenContainer backgroundColor={colorScheme.backgroundLight2}>
       <View style={styles.header}>
         <Text style={styles.title}>Panel Admin Aluna</Text>
         <Text style={styles.email}>{user?.email}</Text>
@@ -57,65 +60,65 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  header: {
-    marginTop: 20,
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#1F2937",
-    marginBottom: 8,
-  },
-  email: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  grid: {
-    flex: 1,
-    gap: 16,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    marginBottom: 8,
-  },
-  cardIcon: {
-    fontSize: 40,
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: "#6B7280",
-    textAlign: "center",
-  },
-  logoutButton: {
-    backgroundColor: "#DC2626",
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  logoutText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
+const createStyles = (colorScheme) =>
+  StyleSheet.create({
+    header: {
+      marginTop: 20,
+      marginBottom: 32,
+    },
+    title: {
+      ...fonts.heading.h2,
+      color: colorScheme.text,
+      marginBottom: 8,
+    },
+    email: {
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
+    },
+    grid: {
+      flex: 1,
+      gap: 16,
+    },
+    card: {
+      backgroundColor: colorScheme.background,
+      borderRadius: 12,
+      padding: 20,
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+      elevation: 3,
+      marginBottom: 8,
+    },
+    cardIcon: {
+      fontSize: 40,
+      marginBottom: 12,
+    },
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colorScheme.text,
+      marginBottom: 4,
+    },
+    cardSubtitle: {
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
+      textAlign: "center",
+    },
+    logoutButton: {
+      backgroundColor: colorScheme.error,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    logoutText: {
+      color: colorScheme.background,
+      fontSize: 16,
+      fontWeight: "600",
+    },
+  });
 
 export default HomeScreen;
