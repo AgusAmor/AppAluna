@@ -48,22 +48,20 @@ const LoginScreen = () => {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#9CA3AF"
           value={email}
           onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
           editable={!loading}
+          placeholderTextColor="#9CA3AF"
         />
 
         <TextInput
           style={styles.input}
           placeholder="Contraseña"
-          placeholderTextColor="#9CA3AF"
+          secureTextEntry
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
           editable={!loading}
+          placeholderTextColor="#9CA3AF"
         />
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -76,7 +74,7 @@ const LoginScreen = () => {
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            <Text style={styles.buttonText}>Ingresar</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -87,9 +85,9 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
     padding: 20,
   },
   card: {
@@ -102,7 +100,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
+    elevation: 5,
   },
   title: {
     fontSize: 28,
@@ -112,7 +110,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#6B7280",
     marginBottom: 24,
     textAlign: "center",
@@ -121,8 +119,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    padding: 12,
     marginBottom: 16,
     fontSize: 16,
     color: "#1F2937",
@@ -132,7 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 20,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
   error: {
     color: "#DC2626",
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: "center",
   },
 });

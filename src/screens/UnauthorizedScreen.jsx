@@ -48,21 +48,21 @@ const styles = StyleSheet.create({
     borderColor: "#FCA5A5",
   },
   icon: {
-    fontSize: 48,
+    fontSize: 64,
     marginBottom: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#DC2626",
+    color: "#1F2937",
     marginBottom: 12,
+    textAlign: "center",
   },
   message: {
     fontSize: 16,
     color: "#6B7280",
+    marginBottom: 16,
     textAlign: "center",
-    marginBottom: 12,
-    lineHeight: 24,
   },
   email: {
     fontSize: 14,
