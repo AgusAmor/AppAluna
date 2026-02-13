@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import ScreenContainer from "../components/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 import {
   loadUsers,
@@ -361,21 +362,14 @@ const UsersScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <ActivityIndicator size="large" color="#3B82F6" />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation?.goBack?.()}
-      >
-        <Text style={styles.backText}>← Atrás</Text>
-      </TouchableOpacity>
-
+    <ScreenContainer>
       <Text style={styles.title}>Gestión de Usuarios</Text>
       <Text style={styles.subtitle}>Total: {users.length} usuarios</Text>
 
@@ -396,6 +390,11 @@ const UsersScreen = ({ navigation }) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.usersList}
           scrollEnabled={true}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={50}
+          onEndReachedThreshold={0.1}
         />
       )}
 
@@ -440,25 +439,11 @@ const UsersScreen = ({ navigation }) => {
         onAddressChange={setEditingAddress}
         onSave={handleSaveAddress}
       />
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-  },
-  backButton: {
-    marginBottom: 12,
-    paddingVertical: 8,
-  },
-  backText: {
-    fontSize: 14,
-    color: "#3B82F6",
-    fontWeight: "600",
-  },
   title: {
     fontSize: 24,
     fontWeight: "bold",

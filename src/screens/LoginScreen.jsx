@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import ScreenContainer from "../components/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 
 const LoginScreen = () => {
@@ -40,7 +41,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer backgroundColor="#F3F4F6" centered>
       <View style={styles.card}>
         <Text style={styles.title}>Panel Admin</Text>
         <Text style={styles.subtitle}>Aluna e-commerce</Text>
@@ -78,18 +79,11 @@ const LoginScreen = () => {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,

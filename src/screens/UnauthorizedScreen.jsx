@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import ScreenContainer from "../components/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 
 const UnauthorizedScreen = () => {
@@ -14,7 +15,7 @@ const UnauthorizedScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer backgroundColor="#FEF2F2" centered>
       <View style={styles.card}>
         <Text style={styles.icon}>🔒</Text>
         <Text style={styles.title}>Acceso Denegado</Text>
@@ -27,18 +28,11 @@ const UnauthorizedScreen = () => {
           <Text style={styles.buttonText}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    padding: 20,
-  },
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,

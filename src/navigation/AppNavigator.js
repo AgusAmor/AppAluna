@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -8,42 +9,85 @@ import UsersScreen from "../screens/UsersScreen";
 import LoadingScreen from "../screens/LoadingScreen";
 import UnauthorizedScreen from "../screens/UnauthorizedScreen";
 
+const Stack = createNativeStackNavigator();
+
 /**
- * Simple Navigator - Manages screen state without NavigationContainer
+ * AppNavigator - Manages navigation state using React Navigation
+ * Handles authentication flow and screen navigation
  */
 const AppNavigator = () => {
   const { user, loading, isAdmin } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState("Home");
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (!user) {
-    return <LoginScreen />;
+    return (
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          cardStyle: { backgroundColor: "#F3F4F6" },
+          gestureEnabled: false,
+        }}
+      >
+        <Stack.Screen name="Login" component={LoginScreen} />
+      </Stack.Navigator>
+    );
   }
 
   if (!isAdmin()) {
-    return <UnauthorizedScreen />;
+    return (
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          cardStyle: { backgroundColor: "#FEF2F2" },
+          gestureEnabled: false,
+        }}
+      >
+        <Stack.Screen name="Unauthorized" component={UnauthorizedScreen} />
+      </Stack.Navigator>
+    );
   }
 
-  // Navigation object passed to screens
-  const navigation = {
-    navigate: (screenName) => setCurrentScreen(screenName),
-    goBack: () => setCurrentScreen("Home"),
-  };
-
-  // Render based on current screen
-  switch (currentScreen) {
-    case "Orders":
-      return <OrdersScreen navigation={navigation} />;
-    case "Products":
-      return <ProductsScreen navigation={navigation} />;
-    case "Users":
-      return <UsersScreen navigation={navigation} />;
-    default:
-      return <HomeScreen navigation={navigation} />;
-  }
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+        gestureResponseDistance: 50,
+      }}
+    >
+      <Stack.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: "Panel Admin",
+        }}
+      />
+      <Stack.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{
+          title: "Gestión de Pedidos",
+        }}
+      />
+      <Stack.Screen
+        name="Products"
+        component={ProductsScreen}
+        options={{
+          title: "Gestión de Productos",
+        }}
+      />
+      <Stack.Screen
+        name="Users"
+        component={UsersScreen}
+        options={{
+          title: "Gestión de Usuarios",
+        }}
+      />
+    </Stack.Navigator>
+  );
 };
 
 export default AppNavigator;

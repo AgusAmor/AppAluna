@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import ScreenContainer from "../components/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 
 const ProductsScreen = ({ navigation }) => {
@@ -14,14 +15,7 @@ const ProductsScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation?.goBack?.()}
-      >
-        <Text style={styles.backText}>← Atrás</Text>
-      </TouchableOpacity>
-
+    <ScreenContainer>
       <Text style={styles.title}>Gestión de Productos</Text>
       <Text style={styles.email}>{user?.email}</Text>
 
@@ -35,25 +29,11 @@ const ProductsScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-  },
-  backButton: {
-    marginBottom: 12,
-    paddingVertical: 8,
-  },
-  backText: {
-    fontSize: 14,
-    color: "#3B82F6",
-    fontWeight: "600",
-  },
   title: {
     fontSize: 24,
     fontWeight: "bold",

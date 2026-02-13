@@ -1,22 +1,17 @@
 import React from "react";
-import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, StyleSheet, Text } from "react-native";
+import ScreenContainer from "../components/ScreenContainer";
 
 const LoadingScreen = () => {
   return (
-    <View style={styles.container}>
+    <ScreenContainer centered>
       <ActivityIndicator size="large" color="#3B82F6" />
       <Text style={styles.text}>Cargando...</Text>
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
   text: {
     marginTop: 16,
     fontSize: 16,

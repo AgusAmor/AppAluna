@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import ScreenContainer from "../components/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 
 const HomeScreen = ({ navigation }) => {
@@ -14,7 +15,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer backgroundColor="#F3F4F6">
       <View style={styles.header}>
         <Text style={styles.title}>Panel Admin Aluna</Text>
         <Text style={styles.email}>{user?.email}</Text>
@@ -52,16 +53,11 @@ const HomeScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
-    </View>
+    </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-    padding: 16,
-  },
   header: {
     marginTop: 20,
     marginBottom: 32,
