@@ -2,7 +2,7 @@
  * firebaseProductService.js
  * Firebase API calls for product management
  * Communicates with Cloud Functions endpoints for CRUD operations
- * 
+ *
  * @ref https://firebase.google.com/docs/functions/write-firebase-functions
  */
 
@@ -13,10 +13,10 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 /**
  * Fetches all products from Firestore
  * Products are public data, no authentication required
- * 
+ *
  * @returns {Promise<Array>} Array of product objects with IDs
  * @throws {Error} If Firestore read fails
- * 
+ *
  * @ref https://firebase.google.com/docs/firestore/query-data/get-data
  */
 export async function fetchProducts() {
@@ -65,12 +65,12 @@ export async function fetchProductById(id) {
 /**
  * Creates a new product via Cloud Function
  * POST /createProduct with requireAdmin middleware
- * 
+ *
  * @param {Object} productData - Product data (name, description, imageUrl, pricing, family, etc.)
  * @param {string} token - Firebase Auth token (must be admin)
  * @returns {Promise<Object>} Result with new product id
  * @throws {Error} If creation fails or user is not admin
- * 
+ *
  * @ref https://firebase.google.com/docs/firestore/manage-data/add-data
  */
 export async function createProduct(productData, token) {
@@ -93,7 +93,7 @@ export async function createProduct(productData, token) {
 /**
  * Updates an existing product via Cloud Function
  * POST /updateProduct with requireAdmin middleware
- * 
+ *
  * @param {string} id - Product ID
  * @param {Object} productData - Updated product data
  * @param {string} token - Firebase Auth token (must be admin)
@@ -112,7 +112,7 @@ export async function updateProduct(id, productData, token) {
     const response = await apiPostAuth(
       "/updateProduct",
       { id, ...productData },
-      token
+      token,
     );
     return response;
   } catch (error) {
@@ -124,7 +124,7 @@ export async function updateProduct(id, productData, token) {
 /**
  * Deletes a product via Cloud Function
  * POST /deleteProduct with requireAdmin middleware
- * 
+ *
  * @param {string} id - Product ID to delete
  * @param {string} token - Firebase Auth token (must be admin)
  * @returns {Promise<Object>} Result from endpoint

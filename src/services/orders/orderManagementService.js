@@ -88,7 +88,12 @@ export async function loadOrderById(orderId) {
  * @returns {Promise<Object>} - Updated order data
  * @throws {Error} If update fails or user is not admin
  */
-export async function changeOrderStatus(orderId, newStatus, note = "", authUser) {
+export async function changeOrderStatus(
+  orderId,
+  newStatus,
+  note = "",
+  authUser,
+) {
   try {
     const token = await getAuthToken(authUser);
 
@@ -102,7 +107,7 @@ export async function changeOrderStatus(orderId, newStatus, note = "", authUser)
         status: newStatus,
         note: note || `Order status changed to ${newStatus}`,
       },
-      token
+      token,
     );
 
     return response;

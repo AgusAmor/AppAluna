@@ -47,7 +47,7 @@ export async function loadProductById(productId) {
 /**
  * Creates a new product
  * Only admins can create products
- * 
+ *
  * @param {Object} formData - Product form data
  * @param {Object} authUser - Firebase Auth user object (must be admin)
  * @returns {Promise<Object>} - Result with new product id
@@ -82,7 +82,7 @@ export async function saveNewProduct(formData, authUser) {
 /**
  * Updates an existing product
  * Only admins can update products
- * 
+ *
  * @param {string} productId - Product ID to update
  * @param {Object} formData - Updated product data
  * @param {Object} authUser - Firebase Auth user object (must be admin)
@@ -116,7 +116,7 @@ export async function saveProductChanges(productId, formData, authUser) {
 /**
  * Deletes a product
  * Only admins can delete products
- * 
+ *
  * @param {string} productId - Product ID to delete
  * @param {Object} authUser - Firebase Auth user object (must be admin)
  * @returns {Promise<void>}

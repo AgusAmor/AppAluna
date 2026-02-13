@@ -2,21 +2,28 @@
  * firebaseOrderService.js
  * Firebase API calls for order management
  * Communicates with Cloud Functions endpoints for order operations
- * 
+ *
  * @ref https://firebase.google.com/docs/functions/write-firebase-functions
  */
 
 import { apiPost, apiPostAuth } from "../firebase/apiClient";
 import { firestore } from "../firebase/firebase";
-import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  query,
+  where,
+} from "firebase/firestore";
 
 /**
  * Fetches all orders from Firestore
  * Only admins should call this endpoint
- * 
+ *
  * @returns {Promise<Array>} Array of order objects with IDs
  * @throws {Error} If Firestore read fails
- * 
+ *
  * @ref https://firebase.google.com/docs/firestore/query-data/order-limit-data
  */
 export async function fetchAllOrders() {
@@ -91,12 +98,12 @@ export async function fetchOrderById(id) {
 /**
  * Creates a new order via Cloud Function
  * POST /createOrder
- * 
+ *
  * @param {Object} orderData - Order data (orderNumber, userId, customerInfo, items, summary, delivery, statusHistory)
  * @param {string} token - Firebase Auth token
  * @returns {Promise<Object>} Result with new order id
  * @throws {Error} If creation fails
- * 
+ *
  * @ref https://firebase.google.com/docs/firestore/manage-data/add-data
  */
 export async function createOrder(orderData, token) {
@@ -119,7 +126,7 @@ export async function createOrder(orderData, token) {
 /**
  * Updates an order status via Cloud Function
  * POST /updateOrderStatus with requireAdmin middleware
- * 
+ *
  * @param {string} orderId - Order ID
  * @param {Object} statusData - Status update data (status, note)
  * @param {string} token - Firebase Auth token (must be admin)
@@ -141,7 +148,7 @@ export async function updateOrderStatus(orderId, statusData, token) {
     const response = await apiPostAuth(
       "/updateOrderStatus",
       { orderId, ...statusData },
-      token
+      token,
     );
     return response;
   } catch (error) {
@@ -153,7 +160,7 @@ export async function updateOrderStatus(orderId, statusData, token) {
 /**
  * Deletes an order via Cloud Function
  * POST /deleteOrder with requireAdmin middleware
- * 
+ *
  * @param {string} id - Order ID to delete
  * @param {string} token - Firebase Auth token (must be admin)
  * @returns {Promise<Object>} Result from endpoint

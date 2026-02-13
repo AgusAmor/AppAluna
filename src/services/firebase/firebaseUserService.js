@@ -2,7 +2,7 @@
  * firebaseUserService.js
  * Firebase API calls for user management
  * Communicates directly with Cloud Functions endpoints
- * 
+ *
  * Reference: https://firebase.google.com/docs/firestore/security/get-started
  */
 
@@ -15,7 +15,7 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
  * Read-only operation, no authentication required for admin view
  * @returns {Promise<Array>} Array of user objects with IDs
  * @throws {Error} If Firestore read fails
- * 
+ *
  * @ref https://firebase.google.com/docs/firestore/query-data/get-data
  */
 export async function fetchUsers() {
@@ -38,7 +38,7 @@ export async function fetchUsers() {
  * @param {string} id - User ID
  * @returns {Promise<Object>} User object with id property
  * @throws {Error} If user not found
- * 
+ *
  * @ref https://firebase.google.com/docs/firestore/query-data/get-data#get_a_document
  */
 export async function fetchUserById(id) {
@@ -66,13 +66,13 @@ export async function fetchUserById(id) {
 /**
  * Updates a user in Firestore via Cloud Function
  * POST /updateUserDoc?id=userId
- * 
+ *
  * @param {string} id - User ID
  * @param {Object} userData - User data to update (displayName, email, phone, addresses, accountStatus)
  * @param {string} token - Firebase Auth token
  * @returns {Promise<Object>} Result from endpoint
  * @throws {Error} If update fails
- * 
+ *
  * @ref https://firebase.google.com/docs/functions/http-events
  */
 export async function updateUser(id, userData, token) {
@@ -97,12 +97,12 @@ export async function updateUser(id, userData, token) {
 /**
  * Deletes a user via Cloud Function
  * POST /deleteUser with requireAdmin middleware
- * 
+ *
  * @param {string} id - User ID to delete
  * @param {string} token - Firebase Auth token (must be admin)
  * @returns {Promise<Object>} Result from endpoint
  * @throws {Error} If delete fails or user is not admin
- * 
+ *
  * @ref https://firebase.google.com/docs/auth/admin/manage-users#delete_a_user
  */
 export async function deleteUser(id, token) {
@@ -125,13 +125,13 @@ export async function deleteUser(id, token) {
 /**
  * Sets a user as admin or removes admin privileges
  * POST /setAdminRole with requireAdmin middleware
- * 
+ *
  * @param {string} userId - User ID to promote/demote
  * @param {boolean} isAdmin - Whether user should be admin
  * @param {string} token - Firebase Auth token (must be admin)
  * @returns {Promise<Object>} Result from endpoint with success message
  * @throws {Error} If operation fails or user is not admin
- * 
+ *
  * @ref https://firebase.google.com/docs/auth/admin/custom-claims
  */
 export async function setAdminRole(userId, isAdmin, token) {
@@ -149,7 +149,7 @@ export async function setAdminRole(userId, isAdmin, token) {
     const response = await apiPostAuth(
       "/setAdminRole",
       { userId, isAdmin },
-      token
+      token,
     );
     return response;
   } catch (error) {

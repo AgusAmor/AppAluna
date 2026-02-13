@@ -16,10 +16,10 @@ import {
 /**
  * Validates that a token exists
  * Token should be obtained from AuthContext's getToken() method
- * 
+ *
  * @param {string} token - Auth token
  * @throws {Error} - If token is missing
- * 
+ *
  * @ref https://firebase.google.com/docs/auth/admin/verify-id-tokens
  */
 function validateToken(token) {
@@ -62,7 +62,7 @@ export async function loadUserById(userId) {
 /**
  * Updates an existing user
  * Only admins can call this for other users
- * 
+ *
  * @param {string} userId - User ID to update
  * @param {Object} formData - User data to update
  * @param {string} token - Firebase Auth token from context's getToken()
@@ -88,7 +88,7 @@ export async function saveUserChanges(userId, formData, token) {
 /**
  * Deletes a user
  * Only admins can delete users
- * 
+ *
  * @param {string} userId - User ID to delete
  * @param {string} token - Firebase Auth token from context's getToken()
  * @returns {Promise<void>}
@@ -107,7 +107,7 @@ export async function deleteUserAccount(userId, token) {
 /**
  * Changes user account status (active/suspended/inactive)
  * Only admins can perform this action
- * 
+ *
  * @param {string} userId - User ID
  * @param {string} newStatus - New account status (active, suspended, inactive)
  * @param {string} token - Firebase Auth token from context's getToken()

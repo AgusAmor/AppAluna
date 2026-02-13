@@ -7,9 +7,6 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
-  Modal,
-  TextInput,
-  ScrollView,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -20,6 +17,11 @@ import {
   formatUserStatus,
   formatUserRole,
 } from "../services/users";
+import {
+  UserDetailsModal,
+  UserEditModal,
+  AddressEditModal,
+} from "../components/modals";
 
 /**
  * UsersScreen
@@ -37,9 +39,23 @@ const UsersScreen = ({ navigation }) => {
   const [editForm, setEditForm] = useState({
     displayName: "",
     phone: "",
+    addresses: [],
   });
   const [isSaving, setIsSaving] = useState(false);
   const [actioningUserId, setActioningUserId] = useState(null);
+  const [showAddressEditModal, setShowAddressEditModal] = useState(false);
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+  const [isNewAddress, setIsNewAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState({
+    street: "",
+    number: "",
+    city: "",
+    region: "",
+    postalCode: "",
+    recipientName: "",
+    recipientPhone: "",
+    isDefault: false,
+  });
 
   // Load users on mount
   useEffect(() => {
@@ -79,6 +95,7 @@ const UsersScreen = ({ navigation }) => {
     setEditForm({
       displayName: userItem.displayName || "",
       phone: userItem.phone || "",
+      addresses: userItem.addresses ? [...userItem.addresses] : [],
     });
     setShowDetailsModal(false);
     setShowEditModal(true);
@@ -176,6 +193,100 @@ const UsersScreen = ({ navigation }) => {
     } catch (err) {
       Alert.alert("Error", "Error al cerrar sesión");
     }
+  };
+
+  /**
+   * Opens address edit modal for editing a specific address
+   */
+  const handleEditAddress = (index) => {
+    setIsNewAddress(false);
+    setEditingAddressIndex(index);
+    setEditingAddress({ ...editForm.addresses[index] });
+    setShowEditModal(false); // Close parent modal first
+    setShowAddressEditModal(true);
+  };
+
+  /**
+   * Saves changes to a specific address
+   * Ensures only one address can be marked as default
+   */
+  const handleSaveAddress = () => {
+    if (
+      !editingAddress.street ||
+      !editingAddress.number ||
+      !editingAddress.city ||
+      !editingAddress.region ||
+      !editingAddress.postalCode ||
+      !editingAddress.recipientName ||
+      !editingAddress.recipientPhone
+    ) {
+      Alert.alert("Error", "Todos los campos son obligatorios");
+      return;
+    }
+
+    let updatedAddresses;
+
+    if (isNewAddress) {
+      // Add new address to the list
+      updatedAddresses = [...editForm.addresses, editingAddress];
+    } else {
+      // Update existing address
+      updatedAddresses = [...editForm.addresses];
+      updatedAddresses[editingAddressIndex] = editingAddress;
+    }
+
+    // If this address is being set as default, unset others
+    if (editingAddress.isDefault) {
+      updatedAddresses.forEach((addr, idx) => {
+        addr.isDefault = isNewAddress
+          ? idx === updatedAddresses.length - 1
+          : idx === editingAddressIndex;
+      });
+    }
+
+    setEditForm({ ...editForm, addresses: updatedAddresses });
+    setShowAddressEditModal(false);
+    setShowEditModal(true); // Reopen parent modal
+    setIsNewAddress(false);
+  };
+
+  /**
+   * Deletes an address from the list
+   */
+  const handleDeleteAddress = (index) => {
+    Alert.alert("Eliminar dirección", "¿Deseas eliminar esta dirección?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: () => {
+          const updatedAddresses = editForm.addresses.filter(
+            (_, i) => i !== index,
+          );
+          setEditForm({ ...editForm, addresses: updatedAddresses });
+        },
+      },
+    ]);
+  };
+
+  /**
+   * Opens modal to add a new address
+   */
+  const handleAddAddress = () => {
+    setIsNewAddress(true);
+    setEditingAddressIndex(null);
+    setEditingAddress({
+      street: "",
+      number: "",
+      city: "",
+      region: "",
+      postalCode: "",
+      recipientName: "",
+      recipientPhone: "",
+      isDefault: editForm.addresses.length === 0, // First address is default
+    });
+    setShowEditModal(false); // Close parent modal first
+    setShowAddressEditModal(true);
   };
 
   /**
@@ -292,192 +403,43 @@ const UsersScreen = ({ navigation }) => {
         <Text style={styles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
 
-      {/* Details Modal */}
-      <Modal
+      {/* User Details Modal */}
+      <UserDetailsModal
         visible={showDetailsModal}
-        animationType="slide"
-        transparent={true}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Detalles del Usuario</Text>
-              <TouchableOpacity onPress={() => setShowDetailsModal(false)}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
+        onClose={() => setShowDetailsModal(false)}
+        user={selectedUser}
+        onEdit={() => handleEditUser(selectedUser)}
+        formatDate={formatDate}
+        formatUserStatus={formatUserStatus}
+        formatUserRole={formatUserRole}
+      />
 
-            <ScrollView style={styles.detailsContainer}>
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Nombre</Text>
-                <Text style={styles.detailValue}>
-                  {selectedUser?.displayName || "-"}
-                </Text>
-              </View>
+      {/* User Edit Modal */}
+      <UserEditModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        user={selectedUser}
+        editForm={editForm}
+        onFormChange={setEditForm}
+        onSave={handleSaveUser}
+        isSaving={isSaving}
+        onEditAddress={handleEditAddress}
+        onDeleteAddress={handleDeleteAddress}
+        onAddAddress={handleAddAddress}
+      />
 
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Email</Text>
-                <Text style={styles.detailValue}>{selectedUser?.email}</Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Teléfono</Text>
-                <Text style={styles.detailValue}>
-                  {selectedUser?.phone || "-"}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Rol</Text>
-                <Text style={styles.detailValue}>
-                  {formatUserRole(selectedUser?.role)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Estado de Cuenta</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    selectedUser?.accountStatus === "active"
-                      ? styles.statusActive
-                      : styles.statusSuspended,
-                  ]}
-                >
-                  {formatUserStatus(selectedUser?.accountStatus)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Email Verificado</Text>
-                <Text style={styles.detailValue}>
-                  {selectedUser?.emailVerified ? "Sí" : "No"}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Pedidos Totales</Text>
-                <Text style={styles.detailValue}>
-                  {selectedUser?.totalOrders || 0}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Gasto Total</Text>
-                <Text style={styles.detailValue}>
-                  ${(selectedUser?.totalSpent || 0).toFixed(2)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Creado el</Text>
-                <Text style={styles.detailValue}>
-                  {formatDate(selectedUser?.createdAt)}
-                </Text>
-              </View>
-
-              <View style={styles.detailSection}>
-                <Text style={styles.detailLabel}>Último login</Text>
-                <Text style={styles.detailValue}>
-                  {formatDate(selectedUser?.lastLoginAt)}
-                </Text>
-              </View>
-
-              {selectedUser?.addresses && selectedUser.addresses.length > 0 && (
-                <View style={styles.detailSection}>
-                  <Text style={styles.detailLabel}>
-                    Direcciones ({selectedUser.addresses.length})
-                  </Text>
-                  {selectedUser.addresses.map((addr, idx) => (
-                    <Text key={idx} style={styles.addressText}>
-                      {addr.street} {addr.number}, {addr.region}
-                      {addr.isDefault ? " (Principal)" : ""}
-                    </Text>
-                  ))}
-                </View>
-              )}
-            </ScrollView>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowDetailsModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cerrar</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEditUser(selectedUser)}
-              >
-                <Text style={styles.editButtonText}>Editar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal visible={showEditModal} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar Usuario</Text>
-
-            <ScrollView style={styles.formContainer}>
-              <Text style={styles.label}>Nombre</Text>
-              <TextInput
-                style={styles.input}
-                value={editForm.displayName}
-                onChangeText={(text) =>
-                  setEditForm({ ...editForm, displayName: text })
-                }
-                placeholder="Nombre"
-                editable={!isSaving}
-              />
-
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={[styles.input, styles.disabledInput]}
-                value={selectedUser?.email}
-                editable={false}
-              />
-
-              <Text style={styles.label}>Teléfono</Text>
-              <TextInput
-                style={styles.input}
-                value={editForm.phone}
-                onChangeText={(text) =>
-                  setEditForm({ ...editForm, phone: text })
-                }
-                placeholder="Teléfono"
-                editable={!isSaving}
-              />
-            </ScrollView>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowEditModal(false)}
-                disabled={isSaving}
-              >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.saveButton, isSaving && styles.buttonDisabled]}
-                onPress={handleSaveUser}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.saveButtonText}>Guardar</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Address Edit Modal */}
+      <AddressEditModal
+        visible={showAddressEditModal}
+        onClose={() => {
+          setShowAddressEditModal(false);
+          setShowEditModal(true); // Reopen parent modal on close
+        }}
+        isNew={isNewAddress}
+        address={editingAddress}
+        onAddressChange={setEditingAddress}
+        onSave={handleSaveAddress}
+      />
     </View>
   );
 };
@@ -614,128 +576,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    maxHeight: "90%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1F2937",
-  },
-  closeButton: {
-    fontSize: 24,
-    color: "#6B7280",
-    fontWeight: "bold",
-  },
-  detailsContainer: {
-    marginBottom: 16,
-  },
-  detailSection: {
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#6B7280",
-    marginBottom: 4,
-    textTransform: "uppercase",
-  },
-  detailValue: {
-    fontSize: 16,
-    color: "#1F2937",
-    fontWeight: "500",
-  },
-  addressText: {
-    fontSize: 14,
-    color: "#374151",
-    marginTop: 4,
-    paddingLeft: 8,
-  },
-  formContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    marginBottom: 16,
-    color: "#1F2937",
-  },
-  disabledInput: {
-    backgroundColor: "#F3F4F6",
-    color: "#6B7280",
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#1F2937",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  editButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: "#F59E0B",
-    alignItems: "center",
-  },
-  editButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: "#3B82F6",
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
 });
 
