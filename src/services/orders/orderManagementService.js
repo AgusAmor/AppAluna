@@ -11,6 +11,7 @@ import {
   createOrder,
   updateOrderStatus,
   deleteOrder,
+  listenToOrders,
 } from "../firebase/firebaseOrderService";
 import { getAuthToken } from "./userManagementService";
 
@@ -40,6 +41,22 @@ export async function loadAllOrders() {
   } catch (error) {
     console.error("Error loading all orders:", error);
     throw new Error("Failed to load orders");
+  }
+}
+
+/**
+ * Subscribes to real-time updates of all orders
+ * Perfect for syncing when other admins change order status
+ *
+ * @param {Function} callback - Called with orders array whenever data changes
+ * @returns {Function} Unsubscribe function - call to stop listening
+ */
+export function subscribeToOrders(callback) {
+  try {
+    return listenToOrders(callback);
+  } catch (error) {
+    console.error("Error subscribing to orders:", error);
+    throw error;
   }
 }
 

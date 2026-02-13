@@ -5,6 +5,7 @@
 
 export {
   loadProducts,
+  subscribeToProducts,
   loadProductById,
   saveNewProduct,
   saveProductChanges,

@@ -5,6 +5,7 @@
 
 export {
   loadAllOrders,
+  subscribeToOrders,
   loadUserOrdersById,
   loadOrderById,
   changeOrderStatus,

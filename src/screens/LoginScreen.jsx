@@ -8,7 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import ScreenContainer from "../components/ScreenContainer";
+import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 
 const LoginScreen = () => {

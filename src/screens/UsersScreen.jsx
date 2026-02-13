@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -6,18 +6,16 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Alert,
 } from "react-native";
-import ScreenContainer from "../components/ScreenContainer";
-import { useAuth } from "../context/AuthContext";
+import ScreenContainer from "../components/ui/ScreenContainer";
 import {
-  loadUsers,
-  saveUserChanges,
-  deleteUserAccount,
-  changeUserAccountStatus,
-  formatUserStatus,
-  formatUserRole,
-} from "../services/users";
+  useUsersList,
+  useUserModal,
+  useUserEdit,
+  useAddressEdit,
+  useUserActions,
+} from "../hooks/screens";
+import { formatUserStatus, formatUserRole } from "../services/users";
 import {
   UserDetailsModal,
   UserEditModal,
@@ -28,272 +26,56 @@ import {
  * UsersScreen
  * Admin panel for managing users
  * Allows viewing, editing, and managing user account status
+ *
+ * Uses custom hooks for clean separation of concerns:
+ * - useUsersList: List, pagination, debouncing
+ * - useUserModal: Details modal state
+ * - useUserEdit: Edit form state
+ * - useAddressEdit: Address form state
+ * - useUserActions: User actions (delete, status change, logout)
  */
 const UsersScreen = ({ navigation }) => {
-  const { user: authUser, logout, getToken } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({
-    displayName: "",
-    phone: "",
-    addresses: [],
-  });
-  const [isSaving, setIsSaving] = useState(false);
-  const [actioningUserId, setActioningUserId] = useState(null);
-  const [showAddressEditModal, setShowAddressEditModal] = useState(false);
-  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
-  const [isNewAddress, setIsNewAddress] = useState(false);
-  const [editingAddress, setEditingAddress] = useState({
-    street: "",
-    number: "",
-    city: "",
-    region: "",
-    postalCode: "",
-    recipientName: "",
-    recipientPhone: "",
-    isDefault: false,
-  });
-
-  // Load users on mount
-  useEffect(() => {
-    loadUsersList();
-  }, []);
-
-  /**
-   * Loads all users from Firestore
-   */
-  const loadUsersList = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const usersList = await loadUsers();
-      setUsers(usersList);
-    } catch (err) {
-      console.error("Error loading users:", err);
-      setError("Error al cargar usuarios");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * Opens details modal to view user information
-   */
-  const handleViewUser = (userItem) => {
-    setSelectedUser(userItem);
-    setShowDetailsModal(true);
-  };
-
-  /**
-   * Opens edit modal for a user
-   */
-  const handleEditUser = (userItem) => {
-    setSelectedUser(userItem);
-    setEditForm({
-      displayName: userItem.displayName || "",
-      phone: userItem.phone || "",
-      addresses: userItem.addresses ? [...userItem.addresses] : [],
-    });
-    setShowDetailsModal(false);
-    setShowEditModal(true);
-  };
-
-  /**
-   * Saves user changes
-   */
-  const handleSaveUser = async () => {
-    if (!selectedUser) return;
-
-    try {
-      setIsSaving(true);
-      const token = await getToken();
-      await saveUserChanges(selectedUser.id, editForm, token);
-      Alert.alert("Éxito", "Usuario actualizado correctamente");
-      setShowEditModal(false);
-      await loadUsersList();
-    } catch (err) {
-      console.error("Error saving user:", err);
-      Alert.alert("Error", err.message || "Error al actualizar usuario");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  /**
-   * Changes user account status (active/suspended)
-   */
-  const handleChangeStatus = (userItem) => {
-    const currentStatus = userItem.accountStatus || "active";
-    const newStatus = currentStatus === "active" ? "suspended" : "active";
-    const statusText = newStatus === "active" ? "activar" : "suspender";
-
-    Alert.alert(
-      "Cambiar estado de cuenta",
-      `¿Deseas ${statusText} la cuenta de ${userItem.email}?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Confirmar",
-          onPress: async () => {
-            try {
-              setActioningUserId(userItem.id);
-              const token = await getToken();
-              await changeUserAccountStatus(userItem.id, newStatus, token);
-              Alert.alert("Éxito", `Cuenta ${statusText}ada correctamente`);
-              await loadUsersList();
-            } catch (err) {
-              console.error("Error changing status:", err);
-              Alert.alert("Error", err.message || "Error al cambiar estado");
-            } finally {
-              setActioningUserId(null);
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  /**
-   * Deletes a user with confirmation
-   */
-  const handleDeleteUser = (userItem) => {
-    Alert.alert(
-      "Eliminar usuario",
-      `¿Estás seguro de que deseas eliminar a ${userItem.email}?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setActioningUserId(userItem.id);
-              const token = await getToken();
-              await deleteUserAccount(userItem.id, token);
-              Alert.alert("Éxito", "Usuario eliminado");
-              await loadUsersList();
-            } catch (err) {
-              console.error("Error deleting user:", err);
-              Alert.alert("Error", err.message || "Error al eliminar");
-            } finally {
-              setActioningUserId(null);
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (err) {
-      Alert.alert("Error", "Error al cerrar sesión");
-    }
-  };
-
-  /**
-   * Opens address edit modal for editing a specific address
-   */
-  const handleEditAddress = (index) => {
-    setIsNewAddress(false);
-    setEditingAddressIndex(index);
-    setEditingAddress({ ...editForm.addresses[index] });
-    setShowEditModal(false); // Close parent modal first
-    setShowAddressEditModal(true);
-  };
-
-  /**
-   * Saves changes to a specific address
-   * Ensures only one address can be marked as default
-   */
-  const handleSaveAddress = () => {
-    if (
-      !editingAddress.street ||
-      !editingAddress.number ||
-      !editingAddress.city ||
-      !editingAddress.region ||
-      !editingAddress.postalCode ||
-      !editingAddress.recipientName ||
-      !editingAddress.recipientPhone
-    ) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
-      return;
-    }
-
-    let updatedAddresses;
-
-    if (isNewAddress) {
-      // Add new address to the list
-      updatedAddresses = [...editForm.addresses, editingAddress];
-    } else {
-      // Update existing address
-      updatedAddresses = [...editForm.addresses];
-      updatedAddresses[editingAddressIndex] = editingAddress;
-    }
-
-    // If this address is being set as default, unset others
-    if (editingAddress.isDefault) {
-      updatedAddresses.forEach((addr, idx) => {
-        addr.isDefault = isNewAddress
-          ? idx === updatedAddresses.length - 1
-          : idx === editingAddressIndex;
-      });
-    }
-
-    setEditForm({ ...editForm, addresses: updatedAddresses });
-    setShowAddressEditModal(false);
-    setShowEditModal(true); // Reopen parent modal
-    setIsNewAddress(false);
-  };
-
-  /**
-   * Deletes an address from the list
-   */
-  const handleDeleteAddress = (index) => {
-    Alert.alert("Eliminar dirección", "¿Deseas eliminar esta dirección?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () => {
-          const updatedAddresses = editForm.addresses.filter(
-            (_, i) => i !== index,
-          );
-          setEditForm({ ...editForm, addresses: updatedAddresses });
-        },
-      },
-    ]);
-  };
-
-  /**
-   * Opens modal to add a new address
-   */
-  const handleAddAddress = () => {
-    setIsNewAddress(true);
-    setEditingAddressIndex(null);
-    setEditingAddress({
-      street: "",
-      number: "",
-      city: "",
-      region: "",
-      postalCode: "",
-      recipientName: "",
-      recipientPhone: "",
-      isDefault: editForm.addresses.length === 0, // First address is default
-    });
-    setShowEditModal(false); // Close parent modal first
-    setShowAddressEditModal(true);
-  };
+  // Data management hooks
+  const { users, memoizedUsers, loading, error, loadMore, hasMore } =
+    useUsersList();
+  const {
+    selectedUser,
+    showDetailsModal,
+    openDetailsModal,
+    closeDetailsModal,
+  } = useUserModal();
+  const {
+    editForm,
+    setEditForm,
+    showEditModal,
+    openEditModal,
+    closeEditModal,
+    isSaving,
+    handleSaveUser,
+  } = useUserEdit();
+  const {
+    showAddressEditModal,
+    editingAddressIndex,
+    isNewAddress,
+    editingAddress,
+    setEditingAddress,
+    openEditAddressModal,
+    openAddAddressModal,
+    closeAddressEditModal,
+    handleSaveAddress,
+    handleDeleteAddress,
+  } = useAddressEdit();
+  const {
+    actioningUserId,
+    handleChangeStatus,
+    handleDeleteUser,
+    handleLogout,
+  } = useUserActions();
 
   /**
    * Format timestamp for display
    */
-  const formatDate = (timestamp) => {
+  const formatDate = useCallback((timestamp) => {
     if (!timestamp) return "-";
     try {
       const date = timestamp.toDate?.() || new Date(timestamp);
@@ -301,65 +83,132 @@ const UsersScreen = ({ navigation }) => {
     } catch {
       return "-";
     }
-  };
+  }, []);
 
-  // Render user item in list
-  const renderUserItem = ({ item }) => (
-    <View style={styles.userCard}>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.displayName || "Sin nombre"}</Text>
-        <Text style={styles.userEmail}>{item.email}</Text>
-        <View style={styles.userMeta}>
-          <Text style={styles.userMetaText}>{formatUserRole(item.role)}</Text>
-          <Text
-            style={[
-              styles.userStatus,
-              item.accountStatus === "active"
-                ? styles.statusActive
-                : styles.statusSuspended,
-            ]}
-          >
-            {formatUserStatus(item.accountStatus)}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.userActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleViewUser(item)}
-        >
-          <Text style={styles.actionButtonEmoji}>👁️</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleEditUser(item)}
-        >
-          <Text style={styles.actionButtonEmoji}>✏️</Text>
-        </TouchableOpacity>
-
-        {actioningUserId === item.id ? (
-          <ActivityIndicator size="small" color="#3B82F6" />
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              item.accountStatus === "active"
-                ? styles.suspendButton
-                : styles.activateButton,
-            ]}
-            onPress={() => handleChangeStatus(item)}
-          >
-            <Text style={styles.actionButtonEmoji}>
-              {item.accountStatus === "active" ? "🔒" : "🔓"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
+  /**
+   * Handle edit user - opens edit modal with user data
+   */
+  const handleEditUserWrapper = useCallback(
+    (userItem) => {
+      openEditModal(userItem);
+      closeDetailsModal();
+    },
+    [openEditModal, closeDetailsModal],
   );
 
+  /**
+   * Handle edit address - opens address edit modal
+   */
+  const handleEditAddressWrapper = useCallback(
+    (index) => {
+      openEditAddressModal(index, editForm.addresses[index]);
+      closeEditModal();
+    },
+    [openEditAddressModal, closeEditModal, editForm.addresses],
+  );
+
+  /**
+   * Handle delete address - removes address from list
+   */
+  const handleDeleteAddressWrapper = useCallback(
+    (index) => {
+      handleDeleteAddress(index, editForm.addresses, setEditForm);
+    },
+    [handleDeleteAddress, editForm.addresses],
+  );
+
+  /**
+   * Handle add address - opens modal to add new address
+   */
+  const handleAddAddressWrapper = useCallback(() => {
+    openAddAddressModal(editForm.addresses);
+    closeEditModal();
+  }, [openAddAddressModal, closeEditModal, editForm.addresses]);
+
+  /**
+   * Handle save address - validates and saves address changes
+   */
+  const handleSaveAddressWrapper = useCallback(() => {
+    handleSaveAddress(editForm.addresses, setEditForm);
+  }, [handleSaveAddress, editForm.addresses, setEditForm]);
+
+  /**
+   * Handle save user - saves user changes to database
+   */
+  const handleSaveUserWrapper = useCallback(async () => {
+    await handleSaveUser(selectedUser?.id);
+  }, [handleSaveUser, selectedUser?.id]);
+
+  // Render user item in list
+  const renderUserItem = useCallback(
+    ({ item }) => (
+      <View style={styles.userCard}>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {item.displayName || "Sin nombre"}
+          </Text>
+          <Text style={styles.userEmail}>{item.email}</Text>
+          <View style={styles.userMeta}>
+            <Text style={styles.userMetaText}>{formatUserRole(item.role)}</Text>
+            <Text
+              style={[
+                styles.userStatus,
+                item.accountStatus === "active"
+                  ? styles.statusActive
+                  : styles.statusSuspended,
+              ]}
+            >
+              {formatUserStatus(item.accountStatus)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.userActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => openDetailsModal(item)}
+          >
+            <Text style={styles.actionButtonEmoji}>👁️</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleEditUserWrapper(item)}
+          >
+            <Text style={styles.actionButtonEmoji}>✏️</Text>
+          </TouchableOpacity>
+
+          {actioningUserId === item.id ? (
+            <ActivityIndicator size="small" color="#3B82F6" />
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                item.accountStatus === "active"
+                  ? styles.suspendButton
+                  : styles.activateButton,
+              ]}
+              onPress={() => handleChangeStatus(item)}
+            >
+              <Text style={styles.actionButtonEmoji}>
+                {item.accountStatus === "active" ? "🔒" : "🔓"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    ),
+    [
+      actioningUserId,
+      openDetailsModal,
+      handleEditUserWrapper,
+      handleChangeStatus,
+      formatUserRole,
+      formatUserStatus,
+    ],
+  );
+
+  // Loading state
   if (loading) {
     return (
       <ScreenContainer>
@@ -385,7 +234,7 @@ const UsersScreen = ({ navigation }) => {
         </View>
       ) : (
         <FlatList
-          data={users}
+          data={memoizedUsers}
           renderItem={renderUserItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.usersList}
@@ -395,6 +244,17 @@ const UsersScreen = ({ navigation }) => {
           maxToRenderPerBatch={5}
           updateCellsBatchingPeriod={50}
           onEndReachedThreshold={0.1}
+          onEndReached={hasMore ? () => loadMore() : null}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.loadMoreContainer}>
+                <ActivityIndicator size="small" color="#3B82F6" />
+                <Text style={styles.loadMoreText}>
+                  Cargando más usuarios...
+                </Text>
+              </View>
+            ) : null
+          }
         />
       )}
 
@@ -405,9 +265,9 @@ const UsersScreen = ({ navigation }) => {
       {/* User Details Modal */}
       <UserDetailsModal
         visible={showDetailsModal}
-        onClose={() => setShowDetailsModal(false)}
+        onClose={closeDetailsModal}
         user={selectedUser}
-        onEdit={() => handleEditUser(selectedUser)}
+        onEdit={() => handleEditUserWrapper(selectedUser)}
         formatDate={formatDate}
         formatUserStatus={formatUserStatus}
         formatUserRole={formatUserRole}
@@ -416,28 +276,28 @@ const UsersScreen = ({ navigation }) => {
       {/* User Edit Modal */}
       <UserEditModal
         visible={showEditModal}
-        onClose={() => setShowEditModal(false)}
+        onClose={closeEditModal}
         user={selectedUser}
         editForm={editForm}
         onFormChange={setEditForm}
-        onSave={handleSaveUser}
+        onSave={handleSaveUserWrapper}
         isSaving={isSaving}
-        onEditAddress={handleEditAddress}
-        onDeleteAddress={handleDeleteAddress}
-        onAddAddress={handleAddAddress}
+        onEditAddress={handleEditAddressWrapper}
+        onDeleteAddress={handleDeleteAddressWrapper}
+        onAddAddress={handleAddAddressWrapper}
       />
 
       {/* Address Edit Modal */}
       <AddressEditModal
         visible={showAddressEditModal}
         onClose={() => {
-          setShowAddressEditModal(false);
-          setShowEditModal(true); // Reopen parent modal on close
+          closeAddressEditModal();
+          openEditModal(selectedUser);
         }}
         isNew={isNewAddress}
         address={editingAddress}
         onAddressChange={setEditingAddress}
-        onSave={handleSaveAddress}
+        onSave={handleSaveAddressWrapper}
       />
     </ScreenContainer>
   );
@@ -561,6 +421,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+  },
+  loadMoreContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    gap: 8,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    color: "#6B7280",
   },
 });
 

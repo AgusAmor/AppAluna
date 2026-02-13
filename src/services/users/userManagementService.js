@@ -11,6 +11,7 @@ import {
   deleteUser,
   updateUser,
   setAdminRole,
+  listenToUsers,
 } from "../firebase/firebaseUserService";
 
 /**
@@ -40,6 +41,30 @@ export async function loadUsers() {
   } catch (error) {
     console.error("Error loading users:", error);
     throw new Error("Failed to load users");
+  }
+}
+
+/**
+ * Subscribes to real-time updates of all users
+ * Perfect for syncing data when multiple admins are using the app
+ *
+ * @param {Function} callback - Called with users array whenever data changes
+ * @returns {Function} Unsubscribe function - call to stop listening
+ * @throws {Error} If listener setup fails
+ *
+ * Usage:
+ *   const unsubscribe = subscribeToUsers((users) => {
+ *     setUsers(users);
+ *   });
+ *   // Stop listening when component unmounts
+ *   return () => unsubscribe();
+ */
+export function subscribeToUsers(callback) {
+  try {
+    return listenToUsers(callback);
+  } catch (error) {
+    console.error("Error subscribing to users:", error);
+    throw error;
   }
 }
 

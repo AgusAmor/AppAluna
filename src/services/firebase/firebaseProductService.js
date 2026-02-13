@@ -9,6 +9,7 @@
 import { apiPost, apiPostAuth } from "../firebase/apiClient";
 import { firestore } from "../firebase/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { createListener } from "./firebaseListenerUtil";
 
 /**
  * Fetches all products from Firestore
@@ -143,6 +144,23 @@ export async function deleteProduct(id, token) {
     return response;
   } catch (error) {
     console.error("Error deleting product:", error);
+    throw error;
+  }
+}
+
+/**
+ * Listens for real-time updates to all products from Firestore
+ * Perfect for syncing when inventory or pricing changes
+ *
+ * @param {Function} callback - Called with products array: (products) => {}
+ * @returns {Function} Unsubscribe function to stop listening
+ * @throws {Error} If listener setup fails
+ */
+export function listenToProducts(callback) {
+  try {
+    return createListener("products", callback);
+  } catch (error) {
+    console.error("Error setting up products listener:", error);
     throw error;
   }
 }

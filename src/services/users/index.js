@@ -5,6 +5,7 @@
 
 export {
   loadUsers,
+  subscribeToUsers,
   loadUserById,
   saveUserChanges,
   deleteUserAccount,

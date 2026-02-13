@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import ScreenContainer from "../components/ScreenContainer";
+import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 
 const OrdersScreen = ({ navigation }) => {

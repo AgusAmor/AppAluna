@@ -16,6 +16,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { createListener } from "./firebaseListenerUtil";
 
 /**
  * Fetches all orders from Firestore
@@ -179,6 +180,23 @@ export async function deleteOrder(id, token) {
     return response;
   } catch (error) {
     console.error("Error deleting order:", error);
+    throw error;
+  }
+}
+
+/**
+ * Listens for real-time updates to all orders from Firestore
+ * Perfect for syncing when multiple admins are viewing orders
+ *
+ * @param {Function} callback - Called with orders array: (orders) => {}
+ * @returns {Function} Unsubscribe function to stop listening
+ * @throws {Error} If listener setup fails
+ */
+export function listenToOrders(callback) {
+  try {
+    return createListener("orders", callback);
+  } catch (error) {
+    console.error("Error setting up orders listener:", error);
     throw error;
   }
 }

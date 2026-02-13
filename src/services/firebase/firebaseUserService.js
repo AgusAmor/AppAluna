@@ -9,6 +9,7 @@
 import { apiPost, apiPostAuth, apiGet } from "./apiClient";
 import { firestore } from "./firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { createListener } from "./firebaseListenerUtil";
 
 /**
  * Fetches all users directly from Firestore
@@ -30,6 +31,26 @@ export async function fetchUsers() {
   } catch (error) {
     console.error("Error fetching users from Firestore:", error);
     throw new Error("Failed to fetch users from Firestore");
+  }
+}
+
+/**
+ * Listens for real-time updates to all users from Firestore
+ * Calls the callback function immediately with current data, then on every change
+ * Returns an unsubscribe function to stop listening
+ *
+ * @param {Function} callback - Called with users array: (users) => {}
+ * @returns {Function} Unsubscribe function to stop listening
+ * @throws {Error} If listener setup fails
+ *
+ * @ref https://firebase.google.com/docs/firestore/query-data/listen
+ */
+export function listenToUsers(callback) {
+  try {
+    return createListener("users", callback);
+  } catch (error) {
+    console.error("Error setting up users listener:", error);
+    throw error;
   }
 }
 

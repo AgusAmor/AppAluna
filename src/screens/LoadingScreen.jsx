@@ -1,6 +1,6 @@
 import React from "react";
 import { ActivityIndicator, StyleSheet, Text } from "react-native";
-import ScreenContainer from "../components/ScreenContainer";
+import ScreenContainer from "../components/ui/ScreenContainer";
 
 const LoadingScreen = () => {
   return (

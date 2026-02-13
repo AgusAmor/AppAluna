@@ -10,6 +10,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  listenToProducts,
 } from "../firebase/firebaseProductService";
 import { getAuthToken } from "./userManagementService";
 
@@ -25,6 +26,22 @@ export async function loadProducts() {
   } catch (error) {
     console.error("Error loading products:", error);
     throw new Error("Failed to load products");
+  }
+}
+
+/**
+ * Subscribes to real-time updates of all products
+ * Perfect for syncing when inventory or pricing changes
+ *
+ * @param {Function} callback - Called with products array whenever data changes
+ * @returns {Function} Unsubscribe function - call to stop listening
+ */
+export function subscribeToProducts(callback) {
+  try {
+    return listenToProducts(callback);
+  } catch (error) {
+    console.error("Error subscribing to products:", error);
+    throw error;
   }
 }
 
