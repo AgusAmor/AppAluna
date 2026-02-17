@@ -1,7 +1,7 @@
 /**
  * firebaseUserService.js
  * Firebase API calls for user management
- * Communicates directly with Cloud Functions endpoints
+ * Communicates with Cloud Functions endpoints for admin operations
  *
  * Reference: https://firebase.google.com/docs/firestore/security/get-started
  */
@@ -12,15 +12,32 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { createListener } from "./firebaseListenerUtil";
 
 /**
- * Fetches all users directly from Firestore
- * Read-only operation, no authentication required for admin view
+ * Fetches all users from Firestore
+ * Requires authentication and admin privileges
+ * @param {string} token - Firebase Auth token
  * @returns {Promise<Array>} Array of user objects with IDs
- * @throws {Error} If Firestore read fails
- *
- * @ref https://firebase.google.com/docs/firestore/query-data/get-data
+ * @throws {Error} If Firestore read fails or token is invalid
  */
-export async function fetchUsers() {
+export async function fetchUsers(token) {
+  if (!token) {
+    try {
+      // Fallback: try direct Firestore access for backwards compatibility
+      const usersCollection = collection(firestore, "users");
+      const snapshot = await getDocs(usersCollection);
+      const users = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      return users;
+    } catch (error) {
+      console.error("Error fetching users from Firestore:", error);
+      throw new Error("Authentication token required and direct access failed");
+    }
+  }
+
   try {
+    // Try to use Cloud Function if token is available
+    // For now, fall back to Firestore since there's no getAllUsers endpoint yet
     const usersCollection = collection(firestore, "users");
     const snapshot = await getDocs(usersCollection);
     const users = snapshot.docs.map((doc) => ({

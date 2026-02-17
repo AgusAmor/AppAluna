@@ -1,54 +1,112 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Package, ShoppingBag, Users } from "lucide-react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { Package, ShoppingBag, Users, DollarSign } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 import { useThemeColors, fonts } from "../theme";
+import { useDashboardStats } from "../hooks/screens";
 
 const HomeScreen = () => {
   const { user } = useAuth();
   const { colorScheme } = useThemeColors();
+  const { stats, loading, error } = useDashboardStats();
   const styles = createStyles(colorScheme);
+
+  const formatCurrency = (value) => {
+    return value.toLocaleString("es-AR", {
+      style: "currency",
+      currency: "ARS",
+    });
+  };
 
   return (
     <ScreenContainer backgroundColor={colorScheme.backgroundLight2}>
       <View style={styles.header}>
-        <Text style={styles.title}>Panel Admin Aluna</Text>
-        <Text style={styles.email}>{user?.email}</Text>
+        <Text style={styles.title}>Panel de Administración</Text>
+        <Text style={styles.subtitle}>
+          Gestiona productos, pedidos y usuarios
+        </Text>
       </View>
 
-      <View style={styles.grid}>
-        <View style={styles.card}>
-          <Package
-            size={40}
-            color={colorScheme.primary}
-            style={{ marginBottom: 12 }}
-          />
-          <Text style={styles.cardTitle}>Pedidos</Text>
-          <Text style={styles.cardSubtitle}>Gestionar órdenes</Text>
+      {error && (
+        <View style={[styles.errorBox, { borderColor: colorScheme.error }]}>
+          <Text style={[styles.errorText, { color: colorScheme.error }]}>
+            {error}
+          </Text>
         </View>
+      )}
 
-        <View style={styles.card}>
-          <ShoppingBag
-            size={40}
-            color={colorScheme.primary}
-            style={{ marginBottom: 12 }}
-          />
-          <Text style={styles.cardTitle}>Productos</Text>
-          <Text style={styles.cardSubtitle}>Gestionar catálogo</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Users
-            size={40}
-            color={colorScheme.primary}
-            style={{ marginBottom: 12 }}
-          />
-          <Text style={styles.cardTitle}>Usuarios</Text>
-          <Text style={styles.cardSubtitle}>Gestionar usuarios</Text>
-        </View>
+      {/* Stats Cards */}
+      <View style={styles.statsGrid}>
+        <StatCard
+          title="Total Productos"
+          value={
+            loading ? (
+              <ActivityIndicator color={colorScheme.primary} />
+            ) : (
+              stats.totalProducts
+            )
+          }
+          icon={<Package size={32} color={colorScheme.primary} />}
+          colorScheme={colorScheme}
+        />
+        <StatCard
+          title="Pedidos Hoy"
+          value={
+            loading ? (
+              <ActivityIndicator color={colorScheme.primary} />
+            ) : (
+              stats.ordersToday
+            )
+          }
+          icon={<ShoppingBag size={32} color={colorScheme.primary} />}
+          colorScheme={colorScheme}
+        />
+        <StatCard
+          title="Usuarios Registrados"
+          value={
+            loading ? (
+              <ActivityIndicator color={colorScheme.primary} />
+            ) : (
+              stats.registeredUsers
+            )
+          }
+          icon={<Users size={32} color={colorScheme.primary} />}
+          colorScheme={colorScheme}
+        />
+        <StatCard
+          title="Ingresos del Mes"
+          value={
+            loading ? (
+              <ActivityIndicator color={colorScheme.primary} />
+            ) : (
+              formatCurrency(stats.monthlyRevenue)
+            )
+          }
+          icon={<DollarSign size={32} color={colorScheme.primary} />}
+          colorScheme={colorScheme}
+        />
       </View>
     </ScreenContainer>
+  );
+};
+
+const StatCard = ({ title, value, icon, colorScheme }) => {
+  const styles = createStyles(colorScheme);
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statIconContainer}>{icon}</View>
+      <View style={styles.statContent}>
+        <Text style={styles.statLabel}>{title}</Text>
+        {typeof value === "number" ? (
+          <Text style={styles.statValue}>{value}</Text>
+        ) : typeof value === "string" ? (
+          <Text style={styles.statValue}>{value}</Text>
+        ) : (
+          value
+        )}
+      </View>
+    </View>
   );
 };
 
@@ -59,44 +117,75 @@ const createStyles = (colorScheme) =>
       marginBottom: 32,
     },
     title: {
-      ...fonts.heading.h1,
+      ...fonts.heading.h2,
       color: colorScheme.text,
       marginBottom: 8,
     },
-    email: {
-      ...fonts.body.sm,
+    subtitle: {
+      ...fonts.body.base,
       color: colorScheme.textLight,
     },
-    grid: {
-      flex: 1,
-      gap: 16,
+    errorBox: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 16,
+      backgroundColor: colorScheme.background + "20",
     },
-    card: {
+    errorText: {
+      ...fonts.body.sm,
+      textAlign: "center",
+    },
+    statsGrid: {
+      gap: 16,
+      marginBottom: 24,
+    },
+    statCard: {
       backgroundColor: colorScheme.background,
-      borderRadius: 12,
-      padding: 20,
+      borderRadius: 16,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: colorScheme.border + "40",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 6,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    statIconContainer: {
+      width: 56,
+      height: 56,
+      borderRadius: 14,
+      backgroundColor: colorScheme.primary + "15",
       justifyContent: "center",
       alignItems: "center",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
-      elevation: 3,
-      marginBottom: 8,
+      flexShrink: 0,
     },
-    cardIcon: {
-      fontSize: 40,
-      marginBottom: 12,
+    statContent: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: 12,
     },
-    cardTitle: {
-      ...fonts.heading.h4,
-      color: colorScheme.text,
-      marginBottom: 4,
-    },
-    cardSubtitle: {
+    statLabel: {
       ...fonts.body.sm,
       color: colorScheme.textLight,
+      fontWeight: "500",
+      marginBottom: 4,
       textAlign: "center",
+    },
+    statValueContainer: {
+      minHeight: 32,
+      justifyContent: "center",
+    },
+    statValue: {
+      ...fonts.heading.h2,
+      color: colorScheme.primary,
+      textAlign: "center",
+      fontWeight: "700",
     },
   });
 

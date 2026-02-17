@@ -15,3 +15,4 @@ export {
   useModalTransitions,
   useModalReopenLogic,
 } from "./users";
+export { useDashboardStats } from "./useDashboardStats";

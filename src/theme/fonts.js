@@ -66,6 +66,6 @@ export const fonts = {
   button: {
     fontFamily: "Sora",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "900",
   },
 };
