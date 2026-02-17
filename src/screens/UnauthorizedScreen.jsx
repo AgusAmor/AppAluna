@@ -79,9 +79,8 @@ const createStyles = (colorScheme) =>
       paddingHorizontal: 24,
     },
     buttonText: {
+      ...fonts.button,
       color: colorScheme.background,
-      fontSize: 16,
-      fontWeight: "600",
     },
   });
 

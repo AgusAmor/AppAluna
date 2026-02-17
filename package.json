@@ -9,11 +9,14 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/comfortaa": "^0.4.2",
+    "@expo-google-fonts/sora": "^0.4.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.13.0",
     "@react-navigation/native": "^7.1.28",
     "@react-navigation/native-stack": "^7.12.0",
     "expo": "~54.0.33",
+    "expo-google-fonts": "^0.0.0",
     "expo-status-bar": "~3.0.9",
     "firebase": "^12.9.0",
     "lucide-react-native": "^0.574.0",

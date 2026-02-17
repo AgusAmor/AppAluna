@@ -1,45 +1,28 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   TextInput,
   TouchableOpacity,
   Text,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
-import { useAuth } from "../context/AuthContext";
+import { useLoginForm } from "../hooks";
 import { useThemeColors, fonts } from "../theme";
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { login, error } = useAuth();
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    loading,
+    error,
+    handleLogin,
+  } = useLoginForm();
   const { colorScheme } = useThemeColors();
   const styles = createStyles(colorScheme);
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Por favor completa todos los campos");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await login(email, password);
-      // No need to show alert - navigation will handle redirect
-    } catch (err) {
-      console.error("Login error:", err);
-      Alert.alert(
-        "Error de Login",
-        err.message || error || "Error desconocido",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <ScreenContainer backgroundColor={colorScheme.backgroundLight2} centered>
@@ -129,13 +112,12 @@ const createStyles = (colorScheme) =>
       opacity: 0.6,
     },
     buttonText: {
+      ...fonts.button,
       color: colorScheme.background,
-      fontSize: 16,
-      fontWeight: "600",
     },
     error: {
+      ...fonts.body.base,
       color: colorScheme.error,
-      fontSize: 14,
       marginBottom: 12,
       textAlign: "center",
     },

@@ -164,7 +164,7 @@ const createStyles = (colorScheme) =>
       color: colorScheme.text,
     },
     closeButton: {
-      fontSize: 24,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
       fontWeight: "bold",
     },
@@ -178,13 +178,13 @@ const createStyles = (colorScheme) =>
       borderBottomColor: colorScheme.border,
     },
     detailLabel: {
-      ...fonts.body.xs,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
       marginBottom: 4,
       textTransform: "uppercase",
     },
     detailValue: {
-      fontSize: 16,
+      ...fonts.body.base,
       color: colorScheme.text,
       fontWeight: "500",
     },
@@ -213,8 +213,8 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     cancelButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.text,
-      fontSize: 14,
       fontWeight: "600",
     },
     editButton: {
@@ -225,8 +225,8 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     editButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.background,
-      fontSize: 14,
       fontWeight: "600",
     },
   });

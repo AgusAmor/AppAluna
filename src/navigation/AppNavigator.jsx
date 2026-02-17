@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -12,7 +11,6 @@ import UnauthorizedScreen from "../screens/UnauthorizedScreen";
 import NavigationBar from "../components/ui/NavigationBar";
 
 const AppNavigator = () => {
-  const insets = useSafeAreaInsets();
   const { user, loading, isAdmin, logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState("Home");
 
@@ -60,9 +58,7 @@ const AppNavigator = () => {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.screenContainer, { paddingTop: insets.top }]}>
-        {screenContent}
-      </View>
+      <View style={styles.screenContainer}>{screenContent}</View>
       <NavigationBar
         currentScreen={currentScreen}
         onNavigate={handleNavigate}

@@ -205,7 +205,7 @@ const createStyles = (colorScheme) =>
       marginBottom: 20,
     },
     closeButton: {
-      fontSize: 24,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
       fontWeight: "600",
     },
@@ -254,12 +254,11 @@ const createStyles = (colorScheme) =>
       borderRadius: 6,
     },
     addAddressButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.background,
-      fontSize: 12,
-      fontWeight: "600",
     },
     noAddressesText: {
-      fontSize: 14,
+      ...fonts.body.base,
       color: colorScheme.textLighter,
       fontStyle: "italic",
       textAlign: "center",
@@ -280,7 +279,7 @@ const createStyles = (colorScheme) =>
       flex: 1,
     },
     addressCardStreet: {
-      fontSize: 15,
+      ...fonts.body.base,
       fontWeight: "500",
       color: colorScheme.text,
       marginBottom: 4,
@@ -334,8 +333,8 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     cancelButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.text,
-      fontSize: 14,
       fontWeight: "600",
     },
     saveButton: {
@@ -346,8 +345,8 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     saveButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.background,
-      fontSize: 14,
       fontWeight: "600",
     },
     buttonDisabled: {

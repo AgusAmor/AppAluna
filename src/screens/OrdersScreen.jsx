@@ -11,8 +11,10 @@ const OrdersScreen = () => {
 
   return (
     <ScreenContainer>
-      <Text style={styles.title}>Gestión de Pedidos</Text>
-      <Text style={styles.email}>{user?.email}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Gestión de Pedidos</Text>
+        <Text style={styles.subtitle}>{user?.email}</Text>
+      </View>
 
       <View style={styles.placeholder}>
         <Text style={styles.placeholderText}>Órdenes</Text>
@@ -26,15 +28,19 @@ const OrdersScreen = () => {
 
 const createStyles = (colorScheme) =>
   StyleSheet.create({
-    title: {
-      ...fonts.heading.h2,
-      color: colorScheme.text,
-      marginBottom: 8,
+    header: {
+      marginTop: 20,
+      marginBottom: 32,
     },
-    email: {
+    title: {
+      ...fonts.heading.h1,
+      color: colorScheme.text,
+      marginBottom: 4,
+    },
+    subtitle: {
       ...fonts.body.sm,
       color: colorScheme.textLight,
-      marginBottom: 32,
+      marginBottom: 2,
     },
     placeholder: {
       flex: 1,
@@ -45,8 +51,7 @@ const createStyles = (colorScheme) =>
       marginBottom: 20,
     },
     placeholderText: {
-      fontSize: 18,
-      fontWeight: "600",
+      ...fonts.heading.h4,
       color: colorScheme.text,
       marginBottom: 8,
     },
@@ -62,9 +67,8 @@ const createStyles = (colorScheme) =>
       marginBottom: 20,
     },
     logoutText: {
+      ...fonts.button,
       color: colorScheme.background,
-      fontSize: 16,
-      fontWeight: "600",
     },
   });
 

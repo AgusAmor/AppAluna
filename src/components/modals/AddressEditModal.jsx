@@ -197,7 +197,7 @@ const createStyles = (colorScheme) =>
       marginBottom: 20,
     },
     closeButton: {
-      fontSize: 24,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
       fontWeight: "600",
     },
@@ -248,12 +248,12 @@ const createStyles = (colorScheme) =>
       borderColor: colorScheme.primary,
     },
     checkboxText: {
+      ...fonts.body.base,
       color: colorScheme.background,
-      fontSize: 14,
       fontWeight: "bold",
     },
     defaultCheckboxLabel: {
-      fontSize: 14,
+      ...fonts.body.base,
       color: colorScheme.text,
       fontWeight: "500",
     },
@@ -270,8 +270,8 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     cancelButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.text,
-      fontSize: 14,
       fontWeight: "600",
     },
     saveButton: {
@@ -282,8 +282,8 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     saveButtonText: {
+      ...fonts.body.sm,
       color: colorScheme.background,
-      fontSize: 14,
       fontWeight: "600",
     },
     iosContainer: {

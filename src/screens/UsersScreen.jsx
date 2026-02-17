@@ -6,7 +6,6 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Platform,
 } from "react-native";
 import { Eye, Edit, Lock, Unlock } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
@@ -261,8 +260,10 @@ const UsersScreen = () => {
 
   return (
     <ScreenContainer>
-      <Text style={styles.title}>Gestión de Usuarios</Text>
-      <Text style={styles.subtitle}>Total: {users.length} usuarios</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Gestión de Usuarios</Text>
+        <Text style={styles.subtitle}>Total: {users.length} usuarios</Text>
+      </View>
 
       {error && (
         <View style={styles.errorBox}>
@@ -346,15 +347,19 @@ const UsersScreen = () => {
 
 const createStyles = (colorScheme) =>
   StyleSheet.create({
+    header: {
+      marginTop: 20,
+      marginBottom: 32,
+    },
     title: {
-      ...fonts.heading.h2,
+      ...fonts.heading.h1,
       color: colorScheme.text,
       marginBottom: 4,
     },
     subtitle: {
       ...fonts.body.sm,
       color: colorScheme.textLight,
-      marginBottom: 16,
+      marginBottom: 2,
     },
     errorBox: {
       backgroundColor: `${colorScheme.error}20`,
@@ -365,8 +370,8 @@ const createStyles = (colorScheme) =>
       marginBottom: 16,
     },
     errorText: {
+      ...fonts.body.base,
       color: colorScheme.error,
-      fontSize: 14,
     },
     emptyState: {
       flex: 1,
@@ -374,7 +379,7 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     emptyText: {
-      fontSize: 16,
+      ...fonts.body.base,
       color: colorScheme.textLight,
     },
     usersList: {
@@ -395,12 +400,11 @@ const createStyles = (colorScheme) =>
       flex: 1,
     },
     userName: {
-      fontSize: 16,
-      fontWeight: "600",
+      ...fonts.heading.h4,
       color: colorScheme.text,
     },
     userEmail: {
-      fontSize: 14,
+      ...fonts.body.base,
       color: colorScheme.primary,
       marginTop: 4,
     },
@@ -411,11 +415,11 @@ const createStyles = (colorScheme) =>
       alignItems: "center",
     },
     userMetaText: {
-      fontSize: 12,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
     },
     userStatus: {
-      fontSize: 12,
+      ...fonts.body.sm,
       fontWeight: "600",
       paddingHorizontal: 8,
       paddingVertical: 2,
@@ -463,9 +467,8 @@ const createStyles = (colorScheme) =>
       marginTop: 16,
     },
     logoutText: {
+      ...fonts.button,
       color: colorScheme.background,
-      fontSize: 16,
-      fontWeight: "600",
     },
     loadMoreContainer: {
       flexDirection: "row",
@@ -475,7 +478,7 @@ const createStyles = (colorScheme) =>
       gap: 8,
     },
     loadMoreText: {
-      fontSize: 14,
+      ...fonts.body.base,
       color: colorScheme.textLight,
     },
   });

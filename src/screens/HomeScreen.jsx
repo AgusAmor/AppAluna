@@ -59,7 +59,7 @@ const createStyles = (colorScheme) =>
       marginBottom: 32,
     },
     title: {
-      ...fonts.heading.h2,
+      ...fonts.heading.h1,
       color: colorScheme.text,
       marginBottom: 8,
     },
@@ -89,8 +89,7 @@ const createStyles = (colorScheme) =>
       marginBottom: 12,
     },
     cardTitle: {
-      fontSize: 18,
-      fontWeight: "600",
+      ...fonts.heading.h4,
       color: colorScheme.text,
       marginBottom: 4,
     },
