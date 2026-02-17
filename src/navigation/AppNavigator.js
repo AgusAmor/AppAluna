@@ -1,5 +1,5 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import React, { useState } from "react";
+import { View, StyleSheet } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -8,86 +8,74 @@ import ProductsScreen from "../screens/ProductsScreen";
 import UsersScreen from "../screens/UsersScreen";
 import LoadingScreen from "../screens/LoadingScreen";
 import UnauthorizedScreen from "../screens/UnauthorizedScreen";
+import NavigationBar from "../components/ui/NavigationBar";
 
-const Stack = createNativeStackNavigator();
-
-/**
- * AppNavigator - Manages navigation state using React Navigation
- * Handles authentication flow and screen navigation
- */
 const AppNavigator = () => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, logout } = useAuth();
+  const [currentScreen, setCurrentScreen] = useState("Home");
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (!user) {
-    return (
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          cardStyle: { backgroundColor: "#F3F4F6" },
-          gestureEnabled: false,
-        }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-      </Stack.Navigator>
-    );
+    return <LoginScreen />;
   }
 
   if (!isAdmin()) {
-    return (
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          cardStyle: { backgroundColor: "#FEF2F2" },
-          gestureEnabled: false,
-        }}
-      >
-        <Stack.Screen name="Unauthorized" component={UnauthorizedScreen} />
-      </Stack.Navigator>
-    );
+    return <UnauthorizedScreen />;
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  const handleNavigate = (screenName) => {
+    setCurrentScreen(screenName);
+  };
+
+  let screenContent;
+  switch (currentScreen) {
+    case "Home":
+      screenContent = <HomeScreen />;
+      break;
+    case "Products":
+      screenContent = <ProductsScreen />;
+      break;
+    case "Orders":
+      screenContent = <OrdersScreen />;
+      break;
+    case "Users":
+      screenContent = <UsersScreen />;
+      break;
+    default:
+      screenContent = <HomeScreen />;
   }
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        gestureEnabled: true,
-        gestureResponseDistance: 50,
-      }}
-    >
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: "Panel Admin",
-        }}
+    <View style={styles.container}>
+      <View style={styles.screenContainer}>{screenContent}</View>
+      <NavigationBar
+        currentScreen={currentScreen}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
       />
-      <Stack.Screen
-        name="Orders"
-        component={OrdersScreen}
-        options={{
-          title: "Gestión de Pedidos",
-        }}
-      />
-      <Stack.Screen
-        name="Products"
-        component={ProductsScreen}
-        options={{
-          title: "Gestión de Productos",
-        }}
-      />
-      <Stack.Screen
-        name="Users"
-        component={UsersScreen}
-        options={{
-          title: "Gestión de Usuarios",
-        }}
-      />
-    </Stack.Navigator>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: "column",
+  },
+  screenContainer: {
+    flex: 1,
+  },
+});
 
 export default AppNavigator;

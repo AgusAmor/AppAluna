@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { View, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -7,12 +9,11 @@ import ProductsScreen from "../screens/ProductsScreen";
 import UsersScreen from "../screens/UsersScreen";
 import LoadingScreen from "../screens/LoadingScreen";
 import UnauthorizedScreen from "../screens/UnauthorizedScreen";
+import NavigationBar from "../components/ui/NavigationBar";
 
-/**
- * Simple Navigator - Manages screen state without NavigationContainer
- */
 const AppNavigator = () => {
-  const { user, loading, isAdmin } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { user, loading, isAdmin, logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState("Home");
 
   if (loading) {
@@ -27,23 +28,58 @@ const AppNavigator = () => {
     return <UnauthorizedScreen />;
   }
 
-  // Navigation object passed to screens
-  const navigation = {
-    navigate: (screenName) => setCurrentScreen(screenName),
-    goBack: () => setCurrentScreen("Home"),
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
-  // Render based on current screen
+  const handleNavigate = (screenName) => {
+    setCurrentScreen(screenName);
+  };
+
+  let screenContent;
   switch (currentScreen) {
-    case "Orders":
-      return <OrdersScreen navigation={navigation} />;
+    case "Home":
+      screenContent = <HomeScreen />;
+      break;
     case "Products":
-      return <ProductsScreen navigation={navigation} />;
+      screenContent = <ProductsScreen />;
+      break;
+    case "Orders":
+      screenContent = <OrdersScreen />;
+      break;
     case "Users":
-      return <UsersScreen navigation={navigation} />;
+      screenContent = <UsersScreen />;
+      break;
     default:
-      return <HomeScreen navigation={navigation} />;
+      screenContent = <HomeScreen />;
   }
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.screenContainer, { paddingTop: insets.top }]}>
+        {screenContent}
+      </View>
+      <NavigationBar
+        currentScreen={currentScreen}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+      />
+    </View>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: "column",
+  },
+  screenContainer: {
+    flex: 1,
+  },
+});
 
 export default AppNavigator;

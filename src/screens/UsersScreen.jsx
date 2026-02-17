@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { Eye, Edit, Lock, Unlock } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import {
   useUsersList,
@@ -38,7 +39,7 @@ import { useThemeColors, fonts } from "../theme";
  * - useAddressEdit: Address form state
  * - useUserActions: User actions (delete, status change, logout)
  */
-const UsersScreen = ({ navigation }) => {
+const UsersScreen = () => {
   const { colorScheme } = useThemeColors();
   const styles = createStyles(colorScheme);
 
@@ -77,12 +78,8 @@ const UsersScreen = ({ navigation }) => {
     handleSaveAddress,
     handleDeleteAddress,
   } = useAddressEdit();
-  const {
-    actioningUserId,
-    handleChangeStatus,
-    handleDeleteUser,
-    handleLogout,
-  } = useUserActions();
+  const { actioningUserId, handleChangeStatus, handleDeleteUser } =
+    useUserActions();
 
   // Modal transition handlers
   const {
@@ -211,14 +208,14 @@ const UsersScreen = ({ navigation }) => {
             style={styles.actionButton}
             onPress={() => openDetailsModal(item)}
           >
-            <Text style={styles.actionButtonEmoji}>👁️</Text>
+            <Eye size={20} color={colorScheme.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleEditUserWrapper(item)}
           >
-            <Text style={styles.actionButtonEmoji}>✏️</Text>
+            <Edit size={20} color={colorScheme.primary} />
           </TouchableOpacity>
 
           {actioningUserId === item.id ? (
@@ -233,9 +230,11 @@ const UsersScreen = ({ navigation }) => {
               ]}
               onPress={() => handleChangeStatus(item)}
             >
-              <Text style={styles.actionButtonEmoji}>
-                {item.accountStatus === "active" ? "🔒" : "🔓"}
-              </Text>
+              {item.accountStatus === "active" ? (
+                <Lock size={20} color={colorScheme.error} />
+              ) : (
+                <Unlock size={20} color={colorScheme.success} />
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -300,10 +299,6 @@ const UsersScreen = ({ navigation }) => {
           }
         />
       )}
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
 
       {/* User Details Modal */}
       <UserDetailsModal

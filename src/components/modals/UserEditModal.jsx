@@ -12,6 +12,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from "react-native";
+import { Trash2 } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
 
 /**
@@ -141,7 +142,7 @@ const UserEditModal = ({
                           style={styles.deleteAddressButton}
                           onPress={() => onDeleteAddress(idx)}
                         >
-                          <Text style={styles.deleteAddressButtonText}>🗑️</Text>
+                          <Trash2 size={18} color={colorScheme.error} />
                         </TouchableOpacity>
                       </View>
                     </TouchableOpacity>

@@ -1,21 +1,13 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 import { useThemeColors, fonts } from "../theme";
 
-const OrdersScreen = ({ navigation }) => {
-  const { user, logout } = useAuth();
+const OrdersScreen = () => {
+  const { user } = useAuth();
   const { colorScheme } = useThemeColors();
   const styles = createStyles(colorScheme);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
 
   return (
     <ScreenContainer>
@@ -28,10 +20,6 @@ const OrdersScreen = ({ navigation }) => {
           Aquí irá la lista de órdenes
         </Text>
       </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
     </ScreenContainer>
   );
 };

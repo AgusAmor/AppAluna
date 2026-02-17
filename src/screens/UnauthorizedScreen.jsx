@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Lock } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 import { useThemeColors, fonts } from "../theme";
@@ -20,7 +21,11 @@ const UnauthorizedScreen = () => {
   return (
     <ScreenContainer backgroundColor={colorScheme.background} centered>
       <View style={styles.card}>
-        <Text style={styles.icon}>🔒</Text>
+        <Lock
+          size={64}
+          color={colorScheme.error}
+          style={{ marginBottom: 16 }}
+        />
         <Text style={styles.title}>Acceso Denegado</Text>
         <Text style={styles.message}>
           No tienes permisos de administrador para acceder a esta aplicación.

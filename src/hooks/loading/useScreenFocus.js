@@ -1,13 +1,10 @@
 /**
  * useScreenFocus.js
- * Custom hook to manage listeners only when screen is in focus
- * Prevents unnecessary data syncing and battery drain when user is on another screen
- *
- * @ref https://reactnavigation.org/docs/use-focus-effect
+ * Custom hook to manage listeners with lifecycle management
+ * Prevents unnecessary data syncing and battery drain
  */
 
 import { useEffect } from "react";
-import { useFocusEffect } from "@react-navigation/native";
 
 /**
  * Manages lifecycle of listeners based on screen focus
@@ -25,8 +22,8 @@ import { useFocusEffect } from "@react-navigation/native";
  *   });
  */
 export function useScreenFocus(setupListener) {
-  useFocusEffect(() => {
-    // Subscribe when screen comes into focus
+  useEffect(() => {
+    // Subscribe when component mounts
     const unsubscribe = setupListener();
 
     // Unsubscribe when screen loses focus

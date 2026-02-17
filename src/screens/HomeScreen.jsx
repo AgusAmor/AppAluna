@@ -1,21 +1,14 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { Package, ShoppingBag, Users } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { useAuth } from "../context/AuthContext";
 import { useThemeColors, fonts } from "../theme";
 
-const HomeScreen = ({ navigation }) => {
-  const { user, logout } = useAuth();
+const HomeScreen = () => {
+  const { user } = useAuth();
   const { colorScheme } = useThemeColors();
   const styles = createStyles(colorScheme);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
 
   return (
     <ScreenContainer backgroundColor={colorScheme.backgroundLight2}>
@@ -25,37 +18,36 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.grid}>
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("Orders")}
-        >
-          <Text style={styles.cardIcon}>📦</Text>
+        <View style={styles.card}>
+          <Package
+            size={40}
+            color={colorScheme.primary}
+            style={{ marginBottom: 12 }}
+          />
           <Text style={styles.cardTitle}>Pedidos</Text>
           <Text style={styles.cardSubtitle}>Gestionar órdenes</Text>
-        </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("Products")}
-        >
-          <Text style={styles.cardIcon}>🛍️</Text>
+        <View style={styles.card}>
+          <ShoppingBag
+            size={40}
+            color={colorScheme.primary}
+            style={{ marginBottom: 12 }}
+          />
           <Text style={styles.cardTitle}>Productos</Text>
           <Text style={styles.cardSubtitle}>Gestionar catálogo</Text>
-        </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("Users")}
-        >
-          <Text style={styles.cardIcon}>👥</Text>
+        <View style={styles.card}>
+          <Users
+            size={40}
+            color={colorScheme.primary}
+            style={{ marginBottom: 12 }}
+          />
           <Text style={styles.cardTitle}>Usuarios</Text>
           <Text style={styles.cardSubtitle}>Gestionar usuarios</Text>
-        </TouchableOpacity>
+        </View>
       </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
     </ScreenContainer>
   );
 };
@@ -106,18 +98,6 @@ const createStyles = (colorScheme) =>
       ...fonts.body.sm,
       color: colorScheme.textLight,
       textAlign: "center",
-    },
-    logoutButton: {
-      backgroundColor: colorScheme.error,
-      borderRadius: 8,
-      paddingVertical: 12,
-      alignItems: "center",
-      marginBottom: 20,
-    },
-    logoutText: {
-      color: colorScheme.background,
-      fontSize: 16,
-      fontWeight: "600",
     },
   });
 
