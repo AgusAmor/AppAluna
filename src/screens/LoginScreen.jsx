@@ -19,6 +19,8 @@ const LoginScreen = () => {
     setPassword,
     loading,
     error,
+    fieldErrors,
+    hasErrors,
     handleLogin,
   } = useLoginForm();
   const { colorScheme } = useThemeColors();
@@ -30,17 +32,31 @@ const LoginScreen = () => {
         <Text style={styles.title}>Panel Admin</Text>
         <Text style={styles.subtitle}>Aluna e-commerce</Text>
 
+        <Text style={styles.label}>Email</Text>
         <TextInput
-          style={[styles.input, { color: colorScheme.text }]}
+          style={[
+            styles.input,
+            { color: colorScheme.text },
+            fieldErrors.email && styles.inputError,
+          ]}
           placeholder="Email"
           placeholderTextColor={colorScheme.textLighter}
           value={email}
           onChangeText={setEmail}
           editable={!loading}
+          keyboardType="email-address"
         />
+        {fieldErrors.email && (
+          <Text style={styles.errorText}>{fieldErrors.email}</Text>
+        )}
 
+        <Text style={styles.label}>Contraseña</Text>
         <TextInput
-          style={[styles.input, { color: colorScheme.text }]}
+          style={[
+            styles.input,
+            { color: colorScheme.text },
+            fieldErrors.password && styles.inputError,
+          ]}
           placeholder="Contraseña"
           placeholderTextColor={colorScheme.textLighter}
           secureTextEntry
@@ -48,13 +64,19 @@ const LoginScreen = () => {
           onChangeText={setPassword}
           editable={!loading}
         />
+        {fieldErrors.password && (
+          <Text style={styles.errorText}>{fieldErrors.password}</Text>
+        )}
 
         {error && <Text style={styles.error}>{error}</Text>}
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (loading || hasErrors) && styles.buttonDisabled,
+          ]}
           onPress={handleLogin}
-          disabled={loading}
+          disabled={loading || hasErrors}
         >
           {loading ? (
             <ActivityIndicator color={colorScheme.background} />
@@ -93,6 +115,12 @@ const createStyles = (colorScheme) =>
       marginBottom: 24,
       textAlign: "center",
     },
+    label: {
+      ...fonts.body.md,
+      color: colorScheme.primary,
+      marginBottom: 8,
+      fontWeight: "600",
+    },
     input: {
       borderWidth: 1,
       borderColor: colorScheme.border,
@@ -100,6 +128,18 @@ const createStyles = (colorScheme) =>
       padding: 12,
       marginBottom: 16,
       fontSize: 16,
+    },
+    inputError: {
+      borderColor: colorScheme.error,
+      backgroundColor: colorScheme.error + "08",
+      padding: 12,
+    },
+    errorText: {
+      ...fonts.body.sm,
+      color: colorScheme.error,
+      marginTop: -12,
+      marginBottom: 12,
+      fontWeight: "500",
     },
     button: {
       backgroundColor: colorScheme.primary,

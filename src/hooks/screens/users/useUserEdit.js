@@ -9,9 +9,16 @@ import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import { useAuth } from "../../../context/AuthContext";
 import { saveUserChanges } from "../../../services/users";
+import {
+  validateRequired,
+  isValidEmail,
+  isValidContactPhone,
+  validatePhoneMinDigits,
+} from "../../../utils/validationService";
 
 /**
  * Validates form data before saving
+ * Uses validation utilities from validationService
  * @param {Object} formData - Form data to validate
  * @returns {Object} { isValid: boolean, errors: string[] }
  */
@@ -19,24 +26,25 @@ function validateUserForm(formData) {
   const errors = [];
 
   // Validate displayName
-  if (!formData.displayName || formData.displayName.trim().length === 0) {
-    errors.push("El nombre es obligatorio");
-  }
+  const nameError = validateRequired(formData.displayName, "El nombre");
+  if (nameError) errors.push(nameError);
 
   // Validate email
-  if (!formData.email || formData.email.trim().length === 0) {
-    errors.push("El email es obligatorio");
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+  const emailError = validateRequired(formData.email, "El email");
+  if (emailError) {
+    errors.push(emailError);
+  } else if (!isValidEmail(formData.email)) {
     errors.push("El email no tiene un formato válido");
   }
 
   // Validate phone (optional but if provided, must be valid)
   if (formData.phone && formData.phone.trim().length > 0) {
-    const cleanPhone = formData.phone.replace(/[\s\-\(\)\.]/g, "");
-    if (!/^(\+)?[0-9]{7,}$/.test(cleanPhone)) {
+    if (!isValidContactPhone(formData.phone)) {
       errors.push(
         "El número de teléfono no es válido. Usa solo números, espacios o el símbolo +",
       );
+    } else if (!validatePhoneMinDigits(formData.phone, 7)) {
+      errors.push("El teléfono debe tener al menos 7 dígitos");
     }
   }
 

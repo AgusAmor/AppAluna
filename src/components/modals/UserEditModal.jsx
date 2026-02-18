@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,10 +15,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Trash2, X, Plus } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
+import {
+  validateRequired,
+  isValidEmail,
+  isValidContactPhone,
+  validatePhoneMinDigits,
+} from "../../utils/validationService";
+import { filterPhone } from "../../utils/inputFilters";
 
 /**
  * UserEditModal
  * Modal for editing user info (name, phone) and managing addresses
+ * Includes real-time validation for all user fields
  */
 const UserEditModal = ({
   visible,
@@ -35,6 +43,60 @@ const UserEditModal = ({
   const { colorScheme } = useThemeColors();
   const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  // Validate fields in real-time
+  const validateField = useCallback((fieldName, value) => {
+    let error = null;
+
+    switch (fieldName) {
+      case "displayName":
+        error = validateRequired(value, "El nombre");
+        break;
+
+      case "email":
+        error = validateRequired(value, "El email");
+        if (!error && !isValidEmail(value)) {
+          error = "El email no tiene un formato válido";
+        }
+        break;
+
+      case "phone":
+        // Phone is optional
+        if (value && value.trim() !== "") {
+          if (!isValidContactPhone(value)) {
+            error = "Teléfono inválido. Solo números y símbolos +, -, ( )";
+          } else if (!validatePhoneMinDigits(value, 7)) {
+            error = "Teléfono debe tener al menos 7 dígitos";
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [fieldName]: error,
+    }));
+
+    return error;
+  }, []);
+
+  // Handle field changes with validation
+  const handleFieldChange = useCallback(
+    (fieldName, value) => {
+      onFormChange({ ...editForm, [fieldName]: value });
+      validateField(fieldName, value);
+    },
+    [editForm, onFormChange, validateField],
+  );
+
+  // Check if form is valid for saving
+  const hasErrors = useMemo(() => {
+    return Object.values(fieldErrors).some((error) => error !== null);
+  }, [fieldErrors]);
 
   if (!user) return null;
 
@@ -78,37 +140,51 @@ const UserEditModal = ({
             <ScrollView style={styles.formContainer}>
               <Text style={styles.label}>Nombre</Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  fieldErrors.displayName && styles.inputError,
+                ]}
                 value={editForm.displayName}
-                onChangeText={(text) =>
-                  onFormChange({ ...editForm, displayName: text })
-                }
+                onChangeText={(text) => handleFieldChange("displayName", text)}
                 placeholder="Nombre"
                 editable={!isSaving}
               />
+              {fieldErrors.displayName && (
+                <Text style={styles.errorText}>{fieldErrors.displayName}</Text>
+              )}
 
               <Text style={styles.label}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, fieldErrors.email && styles.inputError]}
                 value={editForm.email}
                 onChangeText={(text) =>
-                  onFormChange({ ...editForm, email: text })
+                  handleFieldChange("email", text.toLowerCase().trim())
                 }
+                maxLength={254}
                 placeholder="Email"
                 keyboardType="email-address"
                 editable={!isSaving}
               />
+              {fieldErrors.email && (
+                <Text style={styles.errorText}>{fieldErrors.email}</Text>
+              )}
 
               <Text style={styles.label}>Teléfono</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, fieldErrors.phone && styles.inputError]}
                 value={editForm.phone}
-                onChangeText={(text) =>
-                  onFormChange({ ...editForm, phone: text })
-                }
-                placeholder="Teléfono"
+                onChangeText={(text) => {
+                  const filtered = filterPhone(text);
+                  handleFieldChange("phone", filtered);
+                }}
+                maxLength={20}
+                placeholder="Teléfono (opcional)"
+                keyboardType="phone-pad"
                 editable={!isSaving}
               />
+              {fieldErrors.phone && (
+                <Text style={styles.errorText}>{fieldErrors.phone}</Text>
+              )}
 
               {/* Addresses Section */}
               <View style={styles.addressesSection}>
@@ -186,9 +262,12 @@ const UserEditModal = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.saveButton, isSaving && styles.buttonDisabled]}
+              style={[
+                styles.saveButton,
+                (isSaving || hasErrors) && styles.buttonDisabled,
+              ]}
               onPress={onSave}
-              disabled={isSaving}
+              disabled={isSaving || hasErrors}
             >
               {isSaving ? (
                 <ActivityIndicator color={colorScheme.background} />
@@ -267,6 +346,17 @@ const createStyles = (colorScheme) =>
       marginBottom: 16,
       color: colorScheme.text,
       backgroundColor: colorScheme.backgroundLight,
+      fontWeight: "500",
+    },
+    inputError: {
+      borderColor: colorScheme.error,
+      backgroundColor: colorScheme.error + "08",
+    },
+    errorText: {
+      ...fonts.body.sm,
+      color: colorScheme.error,
+      marginTop: -12,
+      marginBottom: 12,
       fontWeight: "500",
     },
     disabledInput: {

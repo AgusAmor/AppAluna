@@ -7,23 +7,21 @@
 
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
-
-const initialAddressState = {
-  street: "",
-  number: "",
-  city: "",
-  region: "",
-  postalCode: "",
-  recipientName: "",
-  recipientPhone: "",
-  isDefault: false,
-};
+import {
+  createEmptyAddress,
+  validateAddressFields,
+  ensureDefaultAddress,
+} from "../../../utils/addressUtils";
+import {
+  isValidContactPhone,
+  validatePhoneMinDigits,
+} from "../../../utils/validationService";
 
 export function useAddressEdit(onSave) {
   const [showAddressEditModal, setShowAddressEditModal] = useState(false);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
   const [isNewAddress, setIsNewAddress] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(initialAddressState);
+  const [editingAddress, setEditingAddress] = useState(createEmptyAddress());
 
   const openEditAddressModal = useCallback((index, address) => {
     setIsNewAddress(false);
@@ -36,7 +34,7 @@ export function useAddressEdit(onSave) {
     setIsNewAddress(true);
     setEditingAddressIndex(null);
     setEditingAddress({
-      ...initialAddressState,
+      ...createEmptyAddress(),
       isDefault: currentAddresses.length === 0,
     });
     setShowAddressEditModal(true);
@@ -48,17 +46,22 @@ export function useAddressEdit(onSave) {
 
   const handleSaveAddress = useCallback(
     (currentAddresses, setEditForm) => {
-      // Validate all fields
+      // Validate all fields using validateAddressFields (includes length validation)
+      const errors = validateAddressFields(editingAddress);
+
+      // It already validates phone format and min digits, but we can add extra validation here if needed
+      // The validateAddressFields now includes min:7 for phone
       if (
-        !editingAddress.street ||
-        !editingAddress.number ||
-        !editingAddress.city ||
-        !editingAddress.region ||
-        !editingAddress.postalCode ||
-        !editingAddress.recipientName ||
-        !editingAddress.recipientPhone
+        editingAddress.recipientPhone &&
+        !isValidContactPhone(editingAddress.recipientPhone)
       ) {
-        Alert.alert("Error", "Todos los campos son obligatorios");
+        errors.recipientPhone =
+          "Teléfono del Destinatario inválido. Solo números y símbolos +, -, ( )";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        const errorMessages = Object.values(errors);
+        Alert.alert("Validación requerida", errorMessages.join("\n"));
         return;
       }
 
@@ -86,11 +89,8 @@ export function useAddressEdit(onSave) {
         });
       }
 
-      // Si no hay ninguna dirección predeterminada, hacer la primera predeterminada
-      const hasDefault = updatedAddresses.some((addr) => addr.isDefault);
-      if (!hasDefault && updatedAddresses.length > 0) {
-        updatedAddresses[0].isDefault = true;
-      }
+      // Ensure at least one address is default
+      updatedAddresses = ensureDefaultAddress(updatedAddresses);
 
       setEditForm((prev) => ({ ...prev, addresses: updatedAddresses }));
       setShowAddressEditModal(false);
@@ -111,14 +111,10 @@ export function useAddressEdit(onSave) {
               (_, i) => i !== index,
             );
 
-            // Si se eliminó la dirección predeterminada, hacer que la primera sea predeterminada
+            // If deleted address was default, ensure another becomes default
             const deletedWasDefault = currentAddresses[index]?.isDefault;
-            if (
-              deletedWasDefault &&
-              updatedAddresses.length > 0 &&
-              !updatedAddresses.some((addr) => addr.isDefault)
-            ) {
-              updatedAddresses[0].isDefault = true;
+            if (deletedWasDefault && updatedAddresses.length > 0) {
+              updatedAddresses = ensureDefaultAddress(updatedAddresses);
             }
 
             setEditForm((prev) => ({ ...prev, addresses: updatedAddresses }));

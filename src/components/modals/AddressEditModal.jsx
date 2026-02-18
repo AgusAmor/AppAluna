@@ -1,4 +1,10 @@
-import React from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import {
   View,
   Text,
@@ -10,14 +16,26 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
+import {
+  validateRequired,
+  isValidContactPhone,
+  validatePhoneMinDigits,
+  validateLength,
+} from "../../utils/validationService";
+import {
+  getFilterForField,
+  getMaxLengthForField,
+} from "../../utils/inputFilters";
 
 /**
  * AddressEditModal
  * Modal for creating or editing a single address
+ * Includes real-time validation for all address fields
  */
 const AddressEditModal = ({
   visible,
@@ -30,6 +48,116 @@ const AddressEditModal = ({
   const { colorScheme } = useThemeColors();
   const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [validatingFields, setValidatingFields] = useState({});
+  const validationTimeoutRef = useRef({});
+
+  // Validate individual fields with debounce (1000ms like WebAluna)
+  const validateField = useCallback((fieldName, value) => {
+    let error = null;
+
+    // All fields are required
+    const fieldLabels = {
+      street: "Calle",
+      number: "Número",
+      city: "Ciudad",
+      region: "Región/Barrio",
+      postalCode: "Código Postal",
+      recipientName: "Nombre del Destinatario",
+      recipientPhone: "Teléfono del Destinatario",
+    };
+
+    const fieldLabel = fieldLabels[fieldName] || fieldName;
+    error = validateRequired(value, fieldLabel);
+
+    if (!error) {
+      // Validate field-specific length constraints
+      switch (fieldName) {
+        case "number":
+          // Restrict to 1-9999 like WebAluna
+          const numValue = parseInt(value, 10);
+          if (isNaN(numValue) || numValue < 1 || numValue > 9999) {
+            error = `${fieldLabel} debe estar entre 1 y 9999`;
+          } else {
+            error = validateLength(value, 1, 4, fieldLabel);
+          }
+          break;
+        case "street":
+          error = validateLength(value, 3, 100, fieldLabel);
+          break;
+        case "city":
+          error = validateLength(value, 2, 50, fieldLabel);
+          break;
+        case "region":
+          error = validateLength(value, 2, 50, fieldLabel);
+          break;
+        case "postalCode":
+          error = validateLength(value, 2, 20, fieldLabel);
+          break;
+        case "recipientName":
+          error = validateLength(value, 3, 100, fieldLabel);
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Additional validation for phone
+    if (fieldName === "recipientPhone" && !error) {
+      if (!isValidContactPhone(value)) {
+        error = "Teléfono inválido. Solo números y símbolos +, -, ( )";
+      } else if (!validatePhoneMinDigits(value, 7)) {
+        error = "Teléfono debe tener al menos 7 dígitos";
+      }
+    }
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [fieldName]: error,
+    }));
+
+    return error;
+  }, []);
+
+  // Handle field changes with validation and debounce (1000ms)
+  const handleFieldChange = useCallback(
+    (fieldName, value) => {
+      onAddressChange({ ...address, [fieldName]: value });
+
+      // Clear previous timeout for this field
+      if (validationTimeoutRef.current[fieldName]) {
+        clearTimeout(validationTimeoutRef.current[fieldName]);
+      }
+
+      // Set validating state
+      setValidatingFields((prev) => ({
+        ...prev,
+        [fieldName]: true,
+      }));
+
+      // Debounce validation by 1000ms (like WebAluna's 1500ms)
+      validationTimeoutRef.current[fieldName] = setTimeout(() => {
+        validateField(fieldName, value);
+        setValidatingFields((prev) => ({
+          ...prev,
+          [fieldName]: false,
+        }));
+      }, 1000);
+    },
+    [address, onAddressChange, validateField],
+  );
+
+  // Check if form has errors
+  const hasErrors = useMemo(() => {
+    return Object.values(fieldErrors).some((error) => error !== null);
+  }, [fieldErrors]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(validationTimeoutRef.current).forEach(clearTimeout);
+    };
+  }, []);
 
   if (!address) return null;
 
@@ -73,74 +201,196 @@ const AddressEditModal = ({
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ScrollView style={styles.formContainer}>
               <Text style={styles.label}>Calle</Text>
-              <TextInput
-                style={styles.input}
-                value={address.street}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, street: text })
-                }
-                placeholder="Nombre de la calle"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    fieldErrors.street && styles.inputError,
+                  ]}
+                  value={address.street}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("street")(text);
+                    handleFieldChange("street", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("street")}
+                  placeholder="Nombre de la calle"
+                />
+                {validatingFields.street && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.street && (
+                <Text style={styles.errorText}>{fieldErrors.street}</Text>
+              )}
 
               <Text style={styles.label}>Número</Text>
-              <TextInput
-                style={styles.input}
-                value={address.number}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, number: text })
-                }
-                placeholder="Número"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    fieldErrors.number && styles.inputError,
+                  ]}
+                  value={address.number}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("number")(text);
+                    handleFieldChange("number", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("number")}
+                  placeholder="Ej: 123, 456, 9999"
+                  keyboardType="number-pad"
+                />
+                {validatingFields.number && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.number && (
+                <Text style={styles.errorText}>{fieldErrors.number}</Text>
+              )}
 
               <Text style={styles.label}>Ciudad</Text>
-              <TextInput
-                style={styles.input}
-                value={address.city}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, city: text })
-                }
-                placeholder="Ciudad"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[styles.input, fieldErrors.city && styles.inputError]}
+                  value={address.city}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("city")(text);
+                    handleFieldChange("city", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("city")}
+                  placeholder="Ciudad"
+                />
+                {validatingFields.city && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.city && (
+                <Text style={styles.errorText}>{fieldErrors.city}</Text>
+              )}
 
-              <Text style={styles.label}>Barrio</Text>
-              <TextInput
-                style={styles.input}
-                value={address.region}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, region: text })
-                }
-                placeholder="Región o barrio"
-              />
+              <Text style={styles.label}>Barrio/Región</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    fieldErrors.region && styles.inputError,
+                  ]}
+                  value={address.region}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("region")(text);
+                    handleFieldChange("region", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("region")}
+                  placeholder="Región o barrio"
+                />
+                {validatingFields.region && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.region && (
+                <Text style={styles.errorText}>{fieldErrors.region}</Text>
+              )}
 
               <Text style={styles.label}>Código Postal</Text>
-              <TextInput
-                style={styles.input}
-                value={address.postalCode}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, postalCode: text })
-                }
-                placeholder="Código postal"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    fieldErrors.postalCode && styles.inputError,
+                  ]}
+                  value={address.postalCode}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("postalCode")(text);
+                    handleFieldChange("postalCode", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("postalCode")}
+                  placeholder="Ej: 1425, C1425BHO"
+                />
+                {validatingFields.postalCode && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.postalCode && (
+                <Text style={styles.errorText}>{fieldErrors.postalCode}</Text>
+              )}
 
               <Text style={styles.label}>Nombre del Destinatario</Text>
-              <TextInput
-                style={styles.input}
-                value={address.recipientName}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, recipientName: text })
-                }
-                placeholder="Nombre completo"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    fieldErrors.recipientName && styles.inputError,
+                  ]}
+                  value={address.recipientName}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("recipientName")(text);
+                    handleFieldChange("recipientName", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("recipientName")}
+                  placeholder="Nombre completo"
+                />
+                {validatingFields.recipientName && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.recipientName && (
+                <Text style={styles.errorText}>
+                  {fieldErrors.recipientName}
+                </Text>
+              )}
 
               <Text style={styles.label}>Teléfono del Destinatario</Text>
-              <TextInput
-                style={styles.input}
-                value={address.recipientPhone}
-                onChangeText={(text) =>
-                  onAddressChange({ ...address, recipientPhone: text })
-                }
-                placeholder="+54 9 1234567890"
-              />
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    fieldErrors.recipientPhone && styles.inputError,
+                  ]}
+                  value={address.recipientPhone}
+                  onChangeText={(text) => {
+                    const filtered = getFilterForField("recipientPhone")(text);
+                    handleFieldChange("recipientPhone", filtered);
+                  }}
+                  maxLength={getMaxLengthForField("recipientPhone")}
+                  placeholder="+54 9 1234567890"
+                  keyboardType="phone-pad"
+                />
+                {validatingFields.recipientPhone && (
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={styles.validatingIndicator}
+                  />
+                )}
+              </View>
+              {fieldErrors.recipientPhone && (
+                <Text style={styles.errorText}>
+                  {fieldErrors.recipientPhone}
+                </Text>
+              )}
 
               <TouchableOpacity
                 style={styles.defaultCheckbox}
@@ -173,7 +423,11 @@ const AddressEditModal = ({
               <Text style={styles.cancelButtonText}>Cancelar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.saveButton} onPress={onSave}>
+            <TouchableOpacity
+              style={[styles.saveButton, hasErrors && styles.buttonDisabled]}
+              onPress={onSave}
+              disabled={hasErrors}
+            >
               <Text style={styles.saveButtonText}>
                 {isNew ? "Crear Dirección" : "Guardar Dirección"}
               </Text>
@@ -236,7 +490,13 @@ const createStyles = (colorScheme) =>
       fontWeight: "600",
       letterSpacing: 0.3,
     },
+    inputWrapper: {
+      position: "relative",
+      flexDirection: "row",
+      alignItems: "center",
+    },
     input: {
+      flex: 1,
       borderWidth: 1,
       borderColor: colorScheme.border,
       borderRadius: 10,
@@ -245,6 +505,22 @@ const createStyles = (colorScheme) =>
       marginBottom: 16,
       color: colorScheme.text,
       backgroundColor: colorScheme.backgroundLight,
+      fontWeight: "500",
+    },
+    validatingIndicator: {
+      position: "absolute",
+      right: 12,
+      marginBottom: 16,
+    },
+    inputError: {
+      borderColor: colorScheme.error,
+      backgroundColor: colorScheme.error + "08",
+    },
+    errorText: {
+      ...fonts.body.sm,
+      color: colorScheme.error,
+      marginTop: -12,
+      marginBottom: 12,
       fontWeight: "500",
     },
     defaultCheckbox: {
@@ -316,6 +592,9 @@ const createStyles = (colorScheme) =>
       ...fonts.button,
       color: colorScheme.background,
       fontWeight: "600",
+    },
+    buttonDisabled: {
+      opacity: 0.6,
     },
   });
 
