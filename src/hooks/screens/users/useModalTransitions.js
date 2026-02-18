@@ -23,6 +23,7 @@ export function useModalTransitions(
   showDetailsModal,
   closeDetailsModal,
   openEditModal,
+  openEditModalPreserveAddresses,
   setSelectedUserOnly,
   setReopenDetailsFlag,
   setShouldReopenDetailsOnEditClose,
@@ -103,20 +104,18 @@ export function useModalTransitions(
 
   /**
    * Handle transition from address modal back to edit modal
+   * Preserves address changes in editForm - does not reset user data
    */
-  const handleTransitionAddressToEdit = useCallback(
-    (selectedUser) => {
-      closeAddressEditModal();
-      if (Platform.OS === "ios") {
-        setTimeout(() => {
-          openEditModal(selectedUser);
-        }, TRANSITION_DELAY_MS);
-      } else {
-        openEditModal(selectedUser);
-      }
-    },
-    [closeAddressEditModal, openEditModal],
-  );
+  const handleTransitionAddressToEdit = useCallback(() => {
+    closeAddressEditModal();
+    if (Platform.OS === "ios") {
+      setTimeout(() => {
+        openEditModalPreserveAddresses();
+      }, TRANSITION_DELAY_MS);
+    } else {
+      openEditModalPreserveAddresses();
+    }
+  }, [closeAddressEditModal, openEditModalPreserveAddresses]);
 
   return {
     handleTransitionToEditModal,

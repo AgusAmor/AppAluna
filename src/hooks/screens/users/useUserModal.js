@@ -1,12 +1,12 @@
 /**
  * useUserModal.js
  * Custom hook for managing user details modal state and selection
- * 
+ *
  * Handles:
  * - Showing/hiding details modal
  * - Selecting/clearing user
  * - Tracking modal navigation flow (details to edit transitions)
- * 
+ *
  * Returns:
  * - selectedUser: Currently selected user object
  * - showDetailsModal: Boolean for details modal visibility
@@ -24,7 +24,8 @@ import { useState, useCallback } from "react";
 export function useUserModal() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [shouldReopenDetailsOnEditClose, setShouldReopenDetailsOnEditClose] = useState(false);
+  const [shouldReopenDetailsOnEditClose, setShouldReopenDetailsOnEditClose] =
+    useState(false);
 
   const openDetailsModal = useCallback((userItem) => {
     setSelectedUser(userItem);
@@ -50,6 +51,22 @@ export function useUserModal() {
     setSelectedUser(null);
   }, []);
 
+  /**
+   * Updates the selected user based on the provided user list
+   * Used after saving changes to ensure modal displays latest data
+   */
+  const updateSelectedUserFromList = useCallback(
+    (usersList) => {
+      if (!selectedUser || !usersList) return;
+
+      const updatedUser = usersList.find((u) => u.id === selectedUser.id);
+      if (updatedUser) {
+        setSelectedUser(updatedUser);
+      }
+    },
+    [selectedUser],
+  );
+
   return {
     selectedUser,
     showDetailsModal,
@@ -60,5 +77,6 @@ export function useUserModal() {
     setReopenDetailsFlag,
     setShouldReopenDetailsOnEditClose,
     clearSelectedUser,
+    updateSelectedUserFromList,
   };
 }

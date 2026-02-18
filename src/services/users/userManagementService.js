@@ -119,8 +119,23 @@ export async function saveUserChanges(userId, formData, token) {
   try {
     validateToken(token);
 
+    // Build update object - only include non-empty fields
+    const updateData = {
+      displayName: formData.displayName,
+      email: formData.email,
+      addresses: formData.addresses,
+    };
+
+    // Only include phone if it's not empty
+    if (formData.phone && formData.phone.trim().length > 0) {
+      updateData.phone = formData.phone;
+    } else {
+      // Send empty string to clear phone if it was empty
+      updateData.phone = "";
+    }
+
     // Call API to update user
-    await updateUser(userId, formData, token);
+    await updateUser(userId, updateData, token);
 
     // Reload and return all users
     const updatedUsers = await loadUsers();

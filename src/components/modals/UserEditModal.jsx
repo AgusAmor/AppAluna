@@ -89,9 +89,14 @@ const UserEditModal = ({
 
               <Text style={styles.label}>Email</Text>
               <TextInput
-                style={[styles.input, styles.disabledInput]}
-                value={user.email}
-                editable={false}
+                style={styles.input}
+                value={editForm.email}
+                onChangeText={(text) =>
+                  onFormChange({ ...editForm, email: text })
+                }
+                placeholder="Email"
+                keyboardType="email-address"
+                editable={!isSaving}
               />
 
               <Text style={styles.label}>Teléfono</Text>
@@ -128,7 +133,12 @@ const UserEditModal = ({
                   editForm.addresses.map((address, idx) => (
                     <TouchableOpacity
                       key={idx}
-                      style={styles.addressCard}
+                      style={[
+                        styles.addressCard,
+                        address.isDefault
+                          ? { borderLeftColor: colorScheme.accent }
+                          : { borderLeftColor: colorScheme.primary },
+                      ]}
                       onPress={() => onEditAddress(idx)}
                     >
                       <View style={styles.addressCardContent}>
@@ -142,7 +152,7 @@ const UserEditModal = ({
                         <Text style={styles.addressCardRecipient}>
                           {address.recipientName}
                         </Text>
-                        <Text style={styles.addressCardPhone}>
+                        <Text style={[styles.addressCardPhone]}>
                           {address.recipientPhone}
                         </Text>
                         {address.isDefault && (
@@ -339,7 +349,7 @@ const createStyles = (colorScheme) =>
       marginBottom: 6,
     },
     defaultBadge: {
-      fontSize: 11,
+      ...fonts.body.sm,
       fontWeight: "700",
       color: colorScheme.background,
       backgroundColor: colorScheme.accent,

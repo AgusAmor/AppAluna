@@ -81,58 +81,62 @@ const UserDetailsModal = ({
               <Text style={styles.detailValue}>{user.phone || "-"}</Text>
             </View>
 
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Rol</Text>
-              <Text style={styles.detailValue}>
-                {formatUserRole(user.role)}
-              </Text>
+            {/* Rol y Estado de Cuenta - lado a lado */}
+            <View style={styles.detailRowContainer}>
+              <View style={[styles.detailSection, styles.detailHalf]}>
+                <Text style={styles.detailLabel}>Rol</Text>
+                <Text style={styles.detailValue}>
+                  {formatUserRole(user.role)}
+                </Text>
+              </View>
+
+              <View style={[styles.detailSection, styles.detailHalf]}>
+                <Text style={styles.detailLabel}>Estado de Cuenta</Text>
+                <Text
+                  style={[
+                    styles.detailValue,
+                    user.accountStatus === "active"
+                      ? styles.statusActive
+                      : styles.statusSuspended,
+                  ]}
+                >
+                  {formatUserStatus(user.accountStatus)}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Estado de Cuenta</Text>
-              <Text
-                style={[
-                  styles.detailValue,
-                  user.accountStatus === "active"
-                    ? styles.statusActive
-                    : styles.statusSuspended,
-                ]}
-              >
-                {formatUserStatus(user.accountStatus)}
-              </Text>
+            {/* Pedidos Realizados y Gasto Total - lado a lado */}
+            <View style={styles.detailRowContainer}>
+              <View style={[styles.detailSection, styles.detailHalf]}>
+                <Text style={styles.detailLabel}>Pedidos Realizados</Text>
+                <Text style={styles.detailValue}>{user.totalOrders || 0}</Text>
+              </View>
+
+              <View style={[styles.detailSection, styles.detailHalf]}>
+                <Text style={[styles.detailLabel]}>Gasto Total</Text>
+                <Text
+                  style={[styles.detailValue, { color: colorScheme.accent }]}
+                >
+                  ${(user.totalSpent || 0).toFixed(2)}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Email Verificado</Text>
-              <Text style={styles.detailValue}>
-                {user.emailVerified ? "Sí" : "No"}
-              </Text>
-            </View>
+            {/* Creado el y Último login - lado a lado */}
+            <View style={styles.detailRowContainer}>
+              <View style={[styles.detailSection, styles.detailHalf]}>
+                <Text style={styles.detailLabel}>Creado el</Text>
+                <Text style={styles.detailValue}>
+                  {formatDate(user.createdAt)}
+                </Text>
+              </View>
 
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Pedidos Totales</Text>
-              <Text style={styles.detailValue}>{user.totalOrders || 0}</Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Gasto Total</Text>
-              <Text style={styles.detailValue}>
-                ${(user.totalSpent || 0).toFixed(2)}
-              </Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Creado el</Text>
-              <Text style={styles.detailValue}>
-                {formatDate(user.createdAt)}
-              </Text>
-            </View>
-
-            <View style={styles.detailSection}>
-              <Text style={styles.detailLabel}>Último login</Text>
-              <Text style={styles.detailValue}>
-                {formatDate(user.lastLoginAt)}
-              </Text>
+              <View style={[styles.detailSection, styles.detailHalf]}>
+                <Text style={styles.detailLabel}>Último login</Text>
+                <Text style={styles.detailValue}>
+                  {formatDate(user.lastLoginAt)}
+                </Text>
+              </View>
             </View>
 
             {user.addresses && user.addresses.length > 0 && (
@@ -141,10 +145,16 @@ const UserDetailsModal = ({
                   Direcciones ({user.addresses.length})
                 </Text>
                 {user.addresses.map((addr, idx) => (
-                  <Text key={idx} style={styles.addressText}>
-                    {addr.recipientName} - {addr.street} {addr.number},{" "}
-                    {addr.city}, {addr.region}
-                    {addr.isDefault ? " (Principal)" : ""}
+                  <Text
+                    key={idx}
+                    style={[
+                      styles.addressText,
+                      addr.isDefault
+                        ? styles.addressTextDefault
+                        : styles.addressTextNormal,
+                    ]}
+                  >
+                    {addr.street} {addr.number}, {addr.region} | {addr.city}
                   </Text>
                 ))}
               </View>
@@ -210,15 +220,26 @@ const createStyles = (colorScheme) =>
       marginBottom: 16,
       flex: 1,
     },
+    detailRowContainer: {
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+    },
+    detailHalf: {
+      flex: 1,
+      marginBottom: 16,
+      paddingBottom: 0,
+      borderBottomWidth: 0,
+    },
     detailSection: {
-      marginBottom: 18,
-      paddingBottom: 16,
+      marginBottom: 16,
+      paddingBottom: 8,
       borderBottomWidth: 1,
       borderBottomColor: colorScheme.border + "40",
     },
     detailLabel: {
       ...fonts.body.sm,
-      color: colorScheme.textLight,
+      color: colorScheme.primary,
       marginBottom: 6,
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -239,7 +260,7 @@ const createStyles = (colorScheme) =>
       fontWeight: "600",
     },
     addressText: {
-      ...fonts.body.sm,
+      ...fonts.body.md,
       color: colorScheme.textLight,
       marginTop: 6,
       paddingLeft: 12,
@@ -249,6 +270,11 @@ const createStyles = (colorScheme) =>
       backgroundColor: colorScheme.backgroundLight,
       borderRadius: 8,
       borderLeftWidth: 3,
+    },
+    addressTextDefault: {
+      borderLeftColor: colorScheme.accent,
+    },
+    addressTextNormal: {
       borderLeftColor: colorScheme.primary,
     },
     modalActions: {

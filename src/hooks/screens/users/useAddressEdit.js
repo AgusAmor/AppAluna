@@ -63,21 +63,33 @@ export function useAddressEdit(onSave) {
       }
 
       let updatedAddresses;
+      let addressToSave = { ...editingAddress };
 
-      if (isNewAddress) {
-        updatedAddresses = [...currentAddresses, editingAddress];
-      } else {
-        updatedAddresses = [...currentAddresses];
-        updatedAddresses[editingAddressIndex] = editingAddress;
+      // Si es una nueva dirección y es la primera, hacerla predeterminada automáticamente
+      if (isNewAddress && currentAddresses.length === 0) {
+        addressToSave.isDefault = true;
       }
 
-      // If this address is being set as default, unset others
-      if (editingAddress.isDefault) {
+      if (isNewAddress) {
+        updatedAddresses = [...currentAddresses, addressToSave];
+      } else {
+        updatedAddresses = [...currentAddresses];
+        updatedAddresses[editingAddressIndex] = addressToSave;
+      }
+
+      // Si esta dirección es predeterminada, desmarcar las demás
+      if (addressToSave.isDefault) {
         updatedAddresses.forEach((addr, idx) => {
           addr.isDefault = isNewAddress
             ? idx === updatedAddresses.length - 1
             : idx === editingAddressIndex;
         });
+      }
+
+      // Si no hay ninguna dirección predeterminada, hacer la primera predeterminada
+      const hasDefault = updatedAddresses.some((addr) => addr.isDefault);
+      if (!hasDefault && updatedAddresses.length > 0) {
+        updatedAddresses[0].isDefault = true;
       }
 
       setEditForm((prev) => ({ ...prev, addresses: updatedAddresses }));
@@ -98,6 +110,17 @@ export function useAddressEdit(onSave) {
             const updatedAddresses = currentAddresses.filter(
               (_, i) => i !== index,
             );
+
+            // Si se eliminó la dirección predeterminada, hacer que la primera sea predeterminada
+            const deletedWasDefault = currentAddresses[index]?.isDefault;
+            if (
+              deletedWasDefault &&
+              updatedAddresses.length > 0 &&
+              !updatedAddresses.some((addr) => addr.isDefault)
+            ) {
+              updatedAddresses[0].isDefault = true;
+            }
+
             setEditForm((prev) => ({ ...prev, addresses: updatedAddresses }));
           },
         },

@@ -13,6 +13,27 @@ import {
   deleteUserAccount,
 } from "../../../services/users";
 
+/**
+ * Maps error messages from API to user-friendly Spanish messages
+ */
+function mapErrorMessage(errorMessage) {
+  const errorMap = {
+    email: "El correo electrónico no es válido o ya está en uso",
+    phone: "El número de teléfono no es válido",
+    displayName: "El nombre no es válido",
+    authorization: "No tengas permiso para realizar esta acción",
+    Firebase: "Error al conectar con el servidor",
+  };
+
+  for (const [key, friendlyMessage] of Object.entries(errorMap)) {
+    if (errorMessage?.toLowerCase().includes(key.toLowerCase())) {
+      return friendlyMessage;
+    }
+  }
+
+  return "Ocurrió un error. Por favor, intenta nuevamente";
+}
+
 export function useUserActions() {
   const { logout, getToken } = useAuth();
   const [actioningUserId, setActioningUserId] = useState(null);
@@ -38,7 +59,8 @@ export function useUserActions() {
                 Alert.alert("Éxito", `Cuenta ${statusText}ada correctamente`);
               } catch (err) {
                 console.error("Error changing status:", err);
-                Alert.alert("Error", err.message || "Error al cambiar estado");
+                const friendlyError = mapErrorMessage(err.message);
+                Alert.alert("Error", friendlyError);
               } finally {
                 setActioningUserId(null);
               }
@@ -65,10 +87,11 @@ export function useUserActions() {
                 setActioningUserId(userItem.id);
                 const token = await getToken();
                 await deleteUserAccount(userItem.id, token);
-                Alert.alert("Éxito", "Usuario eliminado");
+                Alert.alert("Éxito", "Usuario eliminado correctamente");
               } catch (err) {
                 console.error("Error deleting user:", err);
-                Alert.alert("Error", err.message || "Error al eliminar");
+                const friendlyError = mapErrorMessage(err.message);
+                Alert.alert("Error", friendlyError);
               } finally {
                 setActioningUserId(null);
               }

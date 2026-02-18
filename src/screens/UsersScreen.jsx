@@ -55,12 +55,14 @@ const UsersScreen = () => {
     setReopenDetailsFlag,
     setShouldReopenDetailsOnEditClose,
     clearSelectedUser,
+    updateSelectedUserFromList,
   } = useUserModal();
   const {
     editForm,
     setEditForm,
     showEditModal,
     openEditModal,
+    openEditModalPreserveAddresses,
     closeEditModal,
     isSaving,
     handleSaveUser,
@@ -90,6 +92,7 @@ const UsersScreen = () => {
     showDetailsModal,
     closeDetailsModal,
     openEditModal,
+    openEditModalPreserveAddresses,
     setSelectedUserOnly,
     setReopenDetailsFlag,
     setShouldReopenDetailsOnEditClose,
@@ -163,19 +166,30 @@ const UsersScreen = () => {
    */
   const handleSaveAddressWrapper = useCallback(() => {
     handleSaveAddress(editForm.addresses, setEditForm);
-  }, [handleSaveAddress, editForm.addresses, setEditForm]);
+    // Transition back to edit modal
+    handleTransitionAddressToEdit();
+  }, [
+    handleSaveAddress,
+    editForm.addresses,
+    setEditForm,
+    handleTransitionAddressToEdit,
+  ]);
 
   /**
    * Wrapper for save user - saves changes and manages modal transitions
    */
   const handleSaveUserWrapper = useCallback(async () => {
     await handleSaveUser(selectedUser?.id);
+    // Update selected user with latest data from list
+    updateSelectedUserFromList(users);
     handleEditModalClose(selectedUser, shouldReopenDetailsOnEditClose);
   }, [
     handleSaveUser,
     selectedUser,
     handleEditModalClose,
     shouldReopenDetailsOnEditClose,
+    updateSelectedUserFromList,
+    users,
   ]);
 
   // Render user item in list
@@ -335,7 +349,7 @@ const UsersScreen = () => {
       {/* Address Edit Modal */}
       <AddressEditModal
         visible={showAddressEditModal}
-        onClose={() => handleTransitionAddressToEdit(selectedUser)}
+        onClose={handleTransitionAddressToEdit}
         isNew={isNewAddress}
         address={editingAddress}
         onAddressChange={setEditingAddress}
