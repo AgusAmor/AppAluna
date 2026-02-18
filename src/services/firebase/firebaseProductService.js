@@ -6,8 +6,8 @@
  * @ref https://firebase.google.com/docs/functions/write-firebase-functions
  */
 
-import { apiPost, apiPostAuth } from "../firebase/apiClient";
-import { firestore } from "../firebase/firebase";
+import { apiPost, apiPostAuth } from "./apiClient";
+import { firestore } from "./firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { createListener } from "./firebaseListenerUtil";
 

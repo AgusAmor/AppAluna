@@ -406,6 +406,7 @@ const createStyles = (colorScheme) =>
     userEmail: {
       ...fonts.body.base,
       color: colorScheme.primary,
+      fontSize: 13,
       marginTop: 4,
     },
     userMeta: {

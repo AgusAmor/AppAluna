@@ -6,7 +6,10 @@ import {
   StyleSheet,
   Modal,
   ScrollView,
+  Platform,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { X } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
 
 /**
@@ -23,18 +26,42 @@ const UserDetailsModal = ({
   formatUserRole,
 }) => {
   const { colorScheme } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
 
   if (!user) return null;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={true}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
+      statusBarTranslucent={true}
+    >
+      <View
+        style={[
+          styles.modalOverlay,
+          {
+            paddingTop: Platform.OS === "ios" ? insets.top : 0,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.modalContent,
+            {
+              paddingBottom: Platform.OS === "ios" ? insets.bottom : 20,
+            },
+          ]}
+        >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Detalles del Usuario</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButtonContainer}
+            >
+              <X size={24} color={colorScheme.textLight} />
             </TouchableOpacity>
           </View>
 
@@ -143,89 +170,122 @@ const createStyles = (colorScheme) =>
   StyleSheet.create({
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
       justifyContent: "flex-end",
     },
     modalContent: {
       backgroundColor: colorScheme.background,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      padding: 20,
-      maxHeight: "90%",
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 24,
+      paddingBottom: 0,
+      height: "80%",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 12,
     },
     modalHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 16,
+      marginBottom: 24,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.border + "30",
     },
     modalTitle: {
-      ...fonts.heading.h2,
+      ...fonts.heading.h3,
       color: colorScheme.text,
+      flex: 1,
     },
-    closeButton: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-      fontWeight: "bold",
+    closeButtonContainer: {
+      width: 40,
+      height: 40,
+      justifyContent: "center",
+      alignItems: "center",
     },
     detailsContainer: {
       marginBottom: 16,
+      flex: 1,
     },
     detailSection: {
-      marginBottom: 16,
-      paddingBottom: 12,
+      marginBottom: 18,
+      paddingBottom: 16,
       borderBottomWidth: 1,
-      borderBottomColor: colorScheme.border,
+      borderBottomColor: colorScheme.border + "40",
     },
     detailLabel: {
       ...fonts.body.sm,
       color: colorScheme.textLight,
-      marginBottom: 4,
+      marginBottom: 6,
       textTransform: "uppercase",
+      letterSpacing: 0.5,
+      fontWeight: "600",
     },
     detailValue: {
       ...fonts.body.base,
       color: colorScheme.text,
       fontWeight: "500",
+      lineHeight: 20,
     },
     statusActive: {
       color: colorScheme.success,
+      fontWeight: "600",
     },
     statusSuspended: {
       color: colorScheme.error,
+      fontWeight: "600",
     },
     addressText: {
-      fontSize: 14,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
-      marginTop: 4,
-      paddingLeft: 8,
+      marginTop: 6,
+      paddingLeft: 12,
+      marginBottom: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      backgroundColor: colorScheme.backgroundLight,
+      borderRadius: 8,
+      borderLeftWidth: 3,
+      borderLeftColor: colorScheme.primary,
     },
     modalActions: {
       flexDirection: "row",
       gap: 12,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colorScheme.border + "30",
     },
     cancelButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
       borderWidth: 1,
       borderColor: colorScheme.border,
       alignItems: "center",
+      backgroundColor: colorScheme.backgroundLight,
     },
     cancelButtonText: {
-      ...fonts.body.sm,
+      ...fonts.button,
       color: colorScheme.text,
       fontWeight: "600",
     },
     editButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
-      backgroundColor: colorScheme.accent,
+      paddingVertical: 14,
+      borderRadius: 10,
+      backgroundColor: colorScheme.primary,
       alignItems: "center",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 6,
     },
     editButtonText: {
-      ...fonts.body.sm,
+      ...fonts.button,
       color: colorScheme.background,
       fontWeight: "600",
     },

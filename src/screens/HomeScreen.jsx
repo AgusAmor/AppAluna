@@ -171,7 +171,7 @@ const createStyles = (colorScheme) =>
       marginLeft: 12,
     },
     statLabel: {
-      ...fonts.body.sm,
+      ...fonts.heading.h4,
       color: colorScheme.textLight,
       fontWeight: "500",
       marginBottom: 4,
@@ -182,7 +182,7 @@ const createStyles = (colorScheme) =>
       justifyContent: "center",
     },
     statValue: {
-      ...fonts.heading.h2,
+      ...fonts.heading.h4,
       color: colorScheme.primary,
       textAlign: "center",
       fontWeight: "700",

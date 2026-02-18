@@ -1,19 +1,30 @@
 /**
  * useDashboardStats.js
- * Custom hook for fetching and managing dashboard statistics
+ * Custom hook for real-time dashboard statistics
+ *
+ * Subscribes to real-time updates from:
+ * - Products (via subscribeToProducts)
+ * - Orders (via subscribeToOrders)
+ * - Users (via subscribeToUsers)
+ *
+ * Calculates stats:
+ * - totalProducts: Count of all products
+ * - ordersToday: Orders created today
+ * - registeredUsers: Count of all users
+ * - monthlyRevenue: Sum of orders from current month
  *
  * Returns:
- * - stats: Object with totalProducts, ordersToday, registeredUsers, monthlyRevenue
- * - loading: Boolean indicating if data is being fetched
+ * - stats: Object with all calculated metrics
+ * - loading: Boolean indicating if data is being loaded
  * - error: Error message if any
  */
 
 import { useState, useEffect } from "react";
+import { InteractionManager } from "react-native";
 import { useAuth } from "../../context/AuthContext";
-import { fetchUsers } from "../../services/firebase/firebaseUserService";
-import { fetchAllOrders } from "../../services/firebase/firebaseOrderService";
-import { fetchProducts } from "../../services/firebase/firebaseProductService";
-import { auth } from "../../services/firebase/firebase";
+import { subscribeToUsers } from "../../services/users";
+import { subscribeToOrders } from "../../services/orders";
+import { subscribeToProducts } from "../../services/products";
 
 export function useDashboardStats() {
   const { user } = useAuth();
@@ -26,59 +37,91 @@ export function useDashboardStats() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Store raw data from listeners
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  // Calculate stats whenever data changes
   useEffect(() => {
-    fetchStats();
+    calculateStats(products, orders, users);
+  }, [products, orders, users]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    const unsubscribes = [];
+
+    try {
+      // Subscribe to products
+      const unsubscribeProducts = subscribeToProducts((updatedProducts) => {
+        InteractionManager.runAfterInteractions(() => {
+          setProducts(updatedProducts);
+        });
+      });
+      unsubscribes.push(unsubscribeProducts);
+
+      // Subscribe to orders
+      const unsubscribeOrders = subscribeToOrders((updatedOrders) => {
+        InteractionManager.runAfterInteractions(() => {
+          setOrders(updatedOrders);
+        });
+      });
+      unsubscribes.push(unsubscribeOrders);
+
+      // Subscribe to users
+      const unsubscribeUsers = subscribeToUsers((updatedUsers) => {
+        InteractionManager.runAfterInteractions(() => {
+          setUsers(updatedUsers);
+        });
+      });
+      unsubscribes.push(unsubscribeUsers);
+
+      // Mark loading complete after first data is received
+      setTimeout(() => setLoading(false), 500);
+    } catch (err) {
+      console.error("Error setting up dashboard stats listeners:", err);
+      setError("Error al cargar estadísticas");
+      setLoading(false);
+    }
+
+    // Cleanup unsubscribers when component unmounts
+    return () => {
+      unsubscribes.forEach((unsub) => {
+        try {
+          unsub();
+        } catch (err) {
+          console.error("Error unsubscribing:", err);
+        }
+      });
+    };
   }, []);
 
-  const fetchStats = async () => {
+  const calculateStats = (productsList, ordersList, usersList) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      // Get auth token for API calls
-      const token = await auth.currentUser?.getIdToken();
-
-      // Fetch all data in parallel with error handling for each
-      let users = [];
-      let orders = [];
-      let products = [];
-
-      try {
-        users = await fetchUsers(token);
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      }
-
-      try {
-        orders = await fetchAllOrders(token);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-      }
-
-      try {
-        products = await fetchProducts();
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      }
-
       // Calculate today's date
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Calculate statistics
-      const totalProducts = products?.length || 0;
+      // Total products
+      const totalProducts = productsList?.length || 0;
 
+      // Orders today
       const ordersToday =
-        orders?.filter((order) => {
+        ordersList?.filter((order) => {
           const orderDate = new Date(order.createdAt || order.created_at);
           orderDate.setHours(0, 0, 0, 0);
           return orderDate.getTime() === today.getTime();
         }).length || 0;
 
-      const registeredUsers = users?.length || 0;
+      // Registered users
+      const registeredUsers = usersList?.length || 0;
 
+      // Monthly revenue
       const monthlyRevenue =
-        orders?.reduce((total, order) => {
+        ordersList?.reduce((total, order) => {
           const orderDate = new Date(order.createdAt || order.created_at);
           const currentDate = new Date();
           const isCurrentMonth =
@@ -94,10 +137,8 @@ export function useDashboardStats() {
         monthlyRevenue,
       });
     } catch (err) {
-      console.error("Error fetching dashboard stats:", err);
-      setError(err.message || "Error cargando estadísticas");
-    } finally {
-      setLoading(false);
+      console.error("Error calculating stats:", err);
+      setError("Error calculando estadísticas");
     }
   };
 

@@ -12,7 +12,7 @@ import {
   deleteProduct,
   listenToProducts,
 } from "../firebase/firebaseProductService";
-import { getAuthToken } from "./userManagementService";
+import { getAuthToken } from "../users/userManagementService";
 
 /**
  * Loads all products from Firestore

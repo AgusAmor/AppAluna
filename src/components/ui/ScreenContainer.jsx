@@ -47,8 +47,8 @@ const ScreenContainer = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingLeft: 12,
+    paddingRight: 12,
   },
   centered: {
     justifyContent: "center",

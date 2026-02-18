@@ -11,6 +11,8 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { X } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
 
 /**
@@ -26,6 +28,7 @@ const AddressEditModal = ({
   onSave,
 }) => {
   const { colorScheme } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
 
   if (!address) return null;
@@ -33,31 +36,37 @@ const AddressEditModal = ({
   return (
     <Modal
       visible={visible}
-      animationType={Platform.OS === "ios" ? "slide" : "fade"}
-      transparent={Platform.OS !== "ios"}
-      presentationStyle={
-        Platform.OS === "ios" ? "fullScreen" : "overFullScreen"
-      }
+      animationType="slide"
+      transparent={true}
+      presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
       onRequestClose={onClose}
+      statusBarTranslucent={true}
     >
       <View
         style={[
           styles.modalOverlay,
-          Platform.OS === "ios" && styles.iosContainer,
+          {
+            paddingTop: Platform.OS === "ios" ? insets.top : 0,
+          },
         ]}
       >
         <View
           style={[
             styles.modalContent,
-            Platform.OS === "ios" && styles.iosContent,
+            {
+              paddingBottom: Platform.OS === "ios" ? insets.bottom : 20,
+            },
           ]}
         >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>
               {isNew ? "Agregar Dirección" : "Editar Dirección"}
             </Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButtonContainer}
+            >
+              <X size={24} color={colorScheme.textLight} />
             </TouchableOpacity>
           </View>
 
@@ -180,50 +189,63 @@ const createStyles = (colorScheme) =>
   StyleSheet.create({
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
       justifyContent: "flex-end",
     },
     modalContent: {
       backgroundColor: colorScheme.background,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      padding: 20,
-      maxHeight: "90%",
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 24,
+      paddingBottom: 0,
+      height: "80%",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 12,
     },
     modalHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.border + "30",
     },
-    closeButton: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-      fontWeight: "600",
+    closeButtonContainer: {
+      width: 40,
+      height: 40,
+      justifyContent: "center",
+      alignItems: "center",
     },
     modalTitle: {
-      ...fonts.heading.h2,
+      ...fonts.heading.h3,
       color: colorScheme.text,
-      marginBottom: 0,
+      flex: 1,
     },
     formContainer: {
       marginBottom: 20,
+      flex: 1,
     },
     label: {
       ...fonts.body.sm,
       color: colorScheme.text,
-      marginBottom: 6,
+      marginBottom: 8,
       fontWeight: "600",
+      letterSpacing: 0.3,
     },
     input: {
       borderWidth: 1,
       borderColor: colorScheme.border,
-      borderRadius: 8,
+      borderRadius: 10,
       padding: 12,
       fontSize: 14,
       marginBottom: 16,
       color: colorScheme.text,
       backgroundColor: colorScheme.backgroundLight,
+      fontWeight: "500",
     },
     defaultCheckbox: {
       flexDirection: "row",
@@ -260,40 +282,40 @@ const createStyles = (colorScheme) =>
     modalActions: {
       flexDirection: "row",
       gap: 12,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colorScheme.border + "30",
     },
     cancelButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
       borderWidth: 1,
       borderColor: colorScheme.border,
       alignItems: "center",
+      backgroundColor: colorScheme.backgroundLight,
     },
     cancelButtonText: {
-      ...fonts.body.sm,
+      ...fonts.button,
       color: colorScheme.text,
       fontWeight: "600",
     },
     saveButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
       backgroundColor: colorScheme.primary,
       alignItems: "center",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 6,
     },
     saveButtonText: {
-      ...fonts.body.sm,
+      ...fonts.button,
       color: colorScheme.background,
       fontWeight: "600",
-    },
-    iosContainer: {
-      backgroundColor: "transparent",
-    },
-    iosContent: {
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      borderBottomLeftRadius: 16,
-      borderBottomRightRadius: 16,
     },
   });
 

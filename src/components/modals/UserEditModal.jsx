@@ -12,7 +12,8 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from "react-native";
-import { Trash2 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Trash2, X, Plus } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
 
 /**
@@ -32,6 +33,7 @@ const UserEditModal = ({
   onAddAddress,
 }) => {
   const { colorScheme } = useThemeColors();
+  const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
 
   if (!user) return null;
@@ -39,29 +41,36 @@ const UserEditModal = ({
   return (
     <Modal
       visible={visible}
-      animationType={Platform.OS === "ios" ? "slide" : "fade"}
-      transparent={Platform.OS !== "ios"}
-      presentationStyle={
-        Platform.OS === "ios" ? "fullScreen" : "overFullScreen"
-      }
+      animationType="slide"
+      transparent={true}
+      presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
       onRequestClose={onClose}
+      statusBarTranslucent={true}
     >
       <View
         style={[
           styles.modalOverlay,
-          Platform.OS === "web" && styles.webOverlay,
+
+          {
+            paddingTop: Platform.OS === "ios" ? insets.top : 0,
+          },
         ]}
       >
         <View
           style={[
             styles.modalContent,
-            Platform.OS === "ios" && styles.iosContent,
+            {
+              paddingBottom: Platform.OS === "ios" ? insets.bottom : 20,
+            },
           ]}
         >
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Editar Usuario</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButtonContainer}
+            >
+              <X size={24} color={colorScheme.textLight} />
             </TouchableOpacity>
           </View>
 
@@ -104,7 +113,10 @@ const UserEditModal = ({
                     style={styles.addAddressButton}
                     onPress={onAddAddress}
                   >
-                    <Text style={styles.addAddressButtonText}>+ Agregar</Text>
+                    <View style={styles.addAddressButtonContent}>
+                      <Plus size={16} color={colorScheme.backgroundLight} />
+                      <Text style={styles.addAddressButtonText}>Agregar</Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
 
@@ -134,7 +146,9 @@ const UserEditModal = ({
                           {address.recipientPhone}
                         </Text>
                         {address.isDefault && (
-                          <Text style={styles.defaultBadge}>Principal</Text>
+                          <Text style={styles.defaultBadge}>
+                            Predeterminada
+                          </Text>
                         )}
                       </View>
                       <View style={styles.addressCardActions}>
@@ -183,55 +197,67 @@ const createStyles = (colorScheme) =>
   StyleSheet.create({
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
       justifyContent: "flex-end",
     },
     modalContent: {
       backgroundColor: colorScheme.background,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      padding: 20,
-      maxHeight: "90%",
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 24,
+      paddingBottom: 0,
+      height: "80%",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 12,
     },
     iosContent: {
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-      maxHeight: undefined,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
     },
     modalHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.border + "30",
     },
-    closeButton: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-      fontWeight: "600",
+    closeButtonContainer: {
+      width: 40,
+      height: 40,
+      justifyContent: "center",
+      alignItems: "center",
     },
     modalTitle: {
-      ...fonts.heading.h2,
+      ...fonts.heading.h3,
       color: colorScheme.text,
-      marginBottom: 20,
+      flex: 1,
     },
     formContainer: {
       marginBottom: 20,
+      flex: 1,
     },
     label: {
       ...fonts.body.sm,
       color: colorScheme.text,
-      marginBottom: 6,
+      marginBottom: 8,
       fontWeight: "600",
+      letterSpacing: 0.3,
     },
     input: {
       borderWidth: 1,
       borderColor: colorScheme.border,
-      borderRadius: 8,
+      borderRadius: 10,
       padding: 12,
       fontSize: 14,
       marginBottom: 16,
       color: colorScheme.text,
       backgroundColor: colorScheme.backgroundLight,
+      fontWeight: "500",
     },
     disabledInput: {
       backgroundColor: colorScheme.backgroundLight2,
@@ -248,14 +274,23 @@ const createStyles = (colorScheme) =>
       marginBottom: 12,
     },
     addAddressButton: {
-      backgroundColor: colorScheme.success,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 6,
+      backgroundColor: colorScheme.accent,
+      paddingRight: 14,
+      paddingLeft: 10,
+      paddingVertical: 8,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    addAddressButtonContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
     },
     addAddressButtonText: {
-      ...fonts.body.sm,
-      color: colorScheme.background,
+      ...fonts.body.md,
+      color: colorScheme.backgroundLight,
+      fontWeight: "600",
     },
     noAddressesText: {
       ...fonts.body.base,
@@ -265,54 +300,56 @@ const createStyles = (colorScheme) =>
       paddingVertical: 16,
     },
     addressCard: {
-      backgroundColor: colorScheme.backgroundLight2,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 10,
+      backgroundColor: colorScheme.backgroundLight,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 12,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      borderLeftWidth: 3,
+      borderLeftWidth: 4,
       borderLeftColor: colorScheme.primary,
+      borderWidth: 1,
+      borderColor: colorScheme.border + "40",
     },
     addressCardContent: {
       flex: 1,
     },
     addressCardStreet: {
       ...fonts.body.base,
-      fontWeight: "500",
+      fontWeight: "600",
       color: colorScheme.text,
       marginBottom: 4,
     },
     addressCardCity: {
-      fontSize: 12,
+      ...fonts.body.sm,
       color: colorScheme.textLight,
       marginBottom: 6,
     },
     addressCardRecipient: {
-      fontSize: 13,
+      ...fonts.body.sm,
       fontWeight: "500",
-      color: colorScheme.textLight,
+      color: colorScheme.primary,
       marginBottom: 6,
     },
     addressCardPhone: {
-      fontSize: 12,
-      color: colorScheme.primary,
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
       fontWeight: "500",
       marginBottom: 6,
     },
     defaultBadge: {
       fontSize: 11,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colorScheme.background,
-      backgroundColor: colorScheme.primary,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 4,
+      backgroundColor: colorScheme.accent,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 6,
       alignSelf: "flex-start",
     },
     addressCardActions: {
-      marginLeft: 8,
+      marginLeft: 12,
     },
     deleteAddressButton: {
       padding: 8,
@@ -323,29 +360,38 @@ const createStyles = (colorScheme) =>
     modalActions: {
       flexDirection: "row",
       gap: 12,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colorScheme.border + "30",
     },
     cancelButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
       borderWidth: 1,
       borderColor: colorScheme.border,
       alignItems: "center",
+      backgroundColor: colorScheme.backgroundLight,
     },
     cancelButtonText: {
-      ...fonts.body.sm,
+      ...fonts.button,
       color: colorScheme.text,
       fontWeight: "600",
     },
     saveButton: {
       flex: 1,
-      paddingVertical: 12,
-      borderRadius: 8,
+      paddingVertical: 14,
+      borderRadius: 10,
       backgroundColor: colorScheme.primary,
       alignItems: "center",
+      shadowColor: colorScheme.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 6,
     },
     saveButtonText: {
-      ...fonts.body.sm,
+      ...fonts.button,
       color: colorScheme.background,
       fontWeight: "600",
     },

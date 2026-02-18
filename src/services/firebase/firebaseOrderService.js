@@ -5,6 +5,7 @@
  */
 
 import { apiGet, apiPostAuth } from "./apiClient";
+import { auth } from "./firebase";
 
 /**
  * Retrieves all orders (admin only)
@@ -133,6 +134,57 @@ export async function deleteOrder(orderId, token) {
   }
 }
 
+/**
+ * Subscribes to real-time updates of all orders using polling
+ * Since orders have strict Firestore rules, we fetch from Cloud Functions periodically
+ *
+ * @param {Function} callback - Called with orders array whenever data changes: (orders) => {}
+ * @returns {Function} Unsubscribe function to stop polling
+ * @throws {Error} If polling setup fails
+ */
+export function listenToOrders(callback) {
+  let lastOrders = [];
+  let intervalId = null;
+  let isPolling = true;
+
+  const pollOrders = async () => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+
+      const orders = await fetchAllOrders(token);
+
+      // Check if data actually changed to avoid unnecessary re-renders
+      const hasChanged = JSON.stringify(lastOrders) !== JSON.stringify(orders);
+      if (hasChanged) {
+        lastOrders = orders;
+        callback(orders);
+      }
+    } catch (error) {
+      console.error("Error polling orders:", error);
+      // Continue polling even on error
+    }
+  };
+
+  // Initial fetch
+  pollOrders();
+
+  // Set up polling interval (3 seconds)
+  intervalId = setInterval(() => {
+    if (isPolling) {
+      pollOrders();
+    }
+  }, 3000);
+
+  // Return unsubscribe function
+  return () => {
+    isPolling = false;
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
+}
+
 export default {
   fetchAllOrders,
   fetchUserOrders,
@@ -140,4 +192,5 @@ export default {
   createOrder,
   updateOrderStatus,
   deleteOrder,
+  listenToOrders,
 };

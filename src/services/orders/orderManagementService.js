@@ -13,7 +13,7 @@ import {
   deleteOrder,
   listenToOrders,
 } from "../firebase/firebaseOrderService";
-import { getAuthToken } from "./userManagementService";
+import { getAuthToken } from "../users/userManagementService";
 
 // Order status constants matching backend
 export const ORDER_STATUS = {

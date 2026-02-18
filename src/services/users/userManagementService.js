@@ -15,6 +15,27 @@ import {
 } from "../firebase/firebaseUserService";
 
 /**
+ * Gets the ID token from a Firebase Auth user
+ * Used for API calls that require authentication
+ *
+ * @param {Object} authUser - Firebase Auth user object
+ * @returns {Promise<string>} - ID token
+ * @throws {Error} - If user is not authenticated or token cannot be obtained
+ */
+export async function getAuthToken(authUser) {
+  if (!authUser) {
+    throw new Error("User not authenticated");
+  }
+  try {
+    const token = await authUser.getIdToken();
+    return token;
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+    throw new Error("Failed to get authentication token");
+  }
+}
+
+/**
  * Validates that a token exists
  * Token should be obtained from AuthContext's getToken() method
  *
@@ -162,11 +183,30 @@ export async function changeUserAccountStatus(userId, newStatus, token) {
 }
 
 /**
+ * Toggles a user's admin role
+ * Promotes user to admin or removes admin privileges
+ *
+ * @param {string} userId - User ID to toggle role for
+ * @param {boolean} shouldBeAdmin - Whether user should have admin role
+ * @param {Object} authUser - Current admin user (must have admin privileges)
+ * @returns {Promise<Object>} - Result from endpoint with success message
+ * @throws {Error} If operation fails or user is not admin
+ */
+export async function toggleUserAdminRole(userId, shouldBeAdmin, authUser) {
+  try {
+    const token = await getAuthToken(authUser);
+    const response = await setAdminRole(userId, shouldBeAdmin, token);
+    return response;
+  } catch (error) {
+    console.error("Error toggling user admin role:", error);
+    throw error;
+  }
+}
 
 /**
  * Formats user's default address for display
  * Used in user lists and detail views
- * 
+ *
  * @param {Array} addresses - Array of user address objects
  * @returns {string} - Formatted address string or "-" if none
  */
