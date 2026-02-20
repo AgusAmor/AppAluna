@@ -128,11 +128,14 @@ const createStyles = (colorScheme) =>
       padding: 12,
       marginBottom: 16,
       fontSize: 16,
+      backgroundColor: "transparent",
+      minHeight: 44,
     },
     inputError: {
       borderColor: colorScheme.error,
       backgroundColor: colorScheme.error + "08",
-      padding: 12,
+      borderWidth: 1,
+      minHeight: 44,
     },
     errorText: {
       ...fonts.body.sm,

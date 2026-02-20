@@ -8,6 +8,7 @@
  * - useUserActions: Manages user actions (status change, delete, logout)
  * - useModalTransitions: Manages modal navigation transitions with platform delays
  * - useModalReopenLogic: Manages modal reopen behavior after close/save
+ * - useUsersFilter: Manages search and status filters for user list
  */
 
 export { useAddressEdit } from "./useAddressEdit";
@@ -17,3 +18,4 @@ export { useUserModal } from "./useUserModal";
 export { useUsersList } from "./useUsersList";
 export { useModalTransitions } from "./useModalTransitions";
 export { useModalReopenLogic } from "./useModalReopenLogic";
+export { useUsersFilter, ACCOUNT_STATUS_FILTERS } from "./useUsersFilter";

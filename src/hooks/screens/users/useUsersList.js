@@ -1,20 +1,21 @@
 /**
  * useUsersList.js
  * Custom hook for managing user list with real-time data subscription
- * Handles: real-time Firebase subscription, debouncing (150ms), pagination (20 items/page), filtering current user
- * Returns: users list, memoized/paginated users, loading state, error state, pagination controls
+ * Handles: real-time Firebase subscription, debouncing (150ms), filtering current user
+ * Returns: users list, debounced/filtered users, loading state, error state
  *
  * Performance optimizations:
  * - Debounce: Waits 150ms after updates stop before re-rendering
- * - Pagination: Loads only 20 items initially, loads more on scroll
- * - Memoization: Prevents unnecessary re-renders of paginated data
+ * - Memoization: Prevents unnecessary re-renders of filtered data
  * - InteractionManager: Schedules updates after user interactions complete
  * - Filters out the currently logged-in user from the list
+ *
+ * Note: Pagination is handled separately in UsersScreen to work correctly with filters
  */
 
 import { useEffect, useState, useMemo } from "react";
 import { InteractionManager } from "react-native";
-import { useDebounce, usePagination } from "../../loading";
+import { useDebounce } from "../../loading";
 import { useAuth } from "../../../context/AuthContext";
 import { subscribeToUsers } from "../../../services/users";
 
@@ -34,16 +35,6 @@ export function useUsersList() {
 
   // Debounce users updates to prevent excessive re-renders on Android
   const debouncedUsers = useDebounce(filteredUsers, 150);
-
-  // Pagination: load 20 users at a time
-  const {
-    visibleItems: paginatedUsers,
-    loadMore,
-    hasMore,
-  } = usePagination(debouncedUsers, 20);
-
-  // Memoize users list
-  const memoizedUsers = useMemo(() => paginatedUsers, [paginatedUsers]);
 
   // Subscribe to real-time updates
   useEffect(() => {
@@ -68,10 +59,8 @@ export function useUsersList() {
 
   return {
     users,
-    memoizedUsers,
+    filteredUsers: debouncedUsers,
     loading,
     error,
-    loadMore,
-    hasMore,
   };
 }

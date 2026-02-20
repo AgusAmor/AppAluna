@@ -6,6 +6,7 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { Eye, Edit, Lock, Unlock } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
@@ -17,7 +18,10 @@ import {
   useUserActions,
   useModalTransitions,
   useModalReopenLogic,
+  useUsersFilter,
+  ACCOUNT_STATUS_FILTERS,
 } from "../hooks/screens";
+import { usePagination } from "../hooks/loading";
 import { formatUserStatus, formatUserRole } from "../services/users";
 import {
   UserDetailsModal,
@@ -43,8 +47,21 @@ const UsersScreen = () => {
   const styles = createStyles(colorScheme);
 
   // Data management hooks
-  const { users, memoizedUsers, loading, error, loadMore, hasMore } =
-    useUsersList();
+  const { filteredUsers, loading, error } = useUsersList();
+  const {
+    filteredUsers: searchFilteredUsers,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+  } = useUsersFilter(filteredUsers);
+
+  // Pagination: load 20 users at a time
+  const {
+    visibleItems: memoizedUsers,
+    loadMore,
+    hasMore,
+  } = usePagination(searchFilteredUsers, 20);
   const {
     selectedUser,
     showDetailsModal,
@@ -181,7 +198,7 @@ const UsersScreen = () => {
   const handleSaveUserWrapper = useCallback(async () => {
     await handleSaveUser(selectedUser?.id);
     // Update selected user with latest data from list
-    updateSelectedUserFromList(users);
+    updateSelectedUserFromList(filteredUsers);
     handleEditModalClose(selectedUser, shouldReopenDetailsOnEditClose);
   }, [
     handleSaveUser,
@@ -189,7 +206,7 @@ const UsersScreen = () => {
     handleEditModalClose,
     shouldReopenDetailsOnEditClose,
     updateSelectedUserFromList,
-    users,
+    filteredUsers,
   ]);
 
   // Render user item in list
@@ -276,7 +293,6 @@ const UsersScreen = () => {
     <ScreenContainer>
       <View style={styles.header}>
         <Text style={styles.title}>Gestión de Usuarios</Text>
-        <Text style={styles.subtitle}>Total: {users.length} usuarios</Text>
       </View>
 
       {error && (
@@ -285,9 +301,83 @@ const UsersScreen = () => {
         </View>
       )}
 
-      {users.length === 0 ? (
+      {/* Search and Filter Controls */}
+      <View style={styles.filterContainer}>
+        <Text style={styles.totalUsers}>
+          Total: {searchFilteredUsers.length} usuarios
+        </Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar por nombre o email..."
+          placeholderTextColor={colorScheme.textLight}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+        />
+      </View>
+
+      {/* Status Filter Buttons */}
+      <View style={styles.statusFilterContainer}>
+        <TouchableOpacity
+          style={[
+            styles.statusFilterButton,
+            statusFilter === ACCOUNT_STATUS_FILTERS.ALL &&
+              styles.statusFilterButtonActive,
+          ]}
+          onPress={() => setStatusFilter(ACCOUNT_STATUS_FILTERS.ALL)}
+        >
+          <Text
+            style={[
+              styles.statusFilterButtonText,
+              statusFilter === ACCOUNT_STATUS_FILTERS.ALL &&
+                styles.statusFilterButtonTextActive,
+            ]}
+          >
+            Todos
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.statusFilterButton,
+            statusFilter === ACCOUNT_STATUS_FILTERS.ACTIVE &&
+              styles.statusFilterButtonActive,
+          ]}
+          onPress={() => setStatusFilter(ACCOUNT_STATUS_FILTERS.ACTIVE)}
+        >
+          <Text
+            style={[
+              styles.statusFilterButtonText,
+              statusFilter === ACCOUNT_STATUS_FILTERS.ACTIVE &&
+                styles.statusFilterButtonTextActive,
+            ]}
+          >
+            Activos
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.statusFilterButton,
+            statusFilter === ACCOUNT_STATUS_FILTERS.SUSPENDED &&
+              styles.statusFilterButtonActive,
+          ]}
+          onPress={() => setStatusFilter(ACCOUNT_STATUS_FILTERS.SUSPENDED)}
+        >
+          <Text
+            style={[
+              styles.statusFilterButtonText,
+              statusFilter === ACCOUNT_STATUS_FILTERS.SUSPENDED &&
+                styles.statusFilterButtonTextActive,
+            ]}
+          >
+            Suspendidos
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {searchFilteredUsers.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No hay usuarios</Text>
+          <Text style={styles.emptyText}>No hay resultados a la búsqueda</Text>
         </View>
       ) : (
         <FlatList
@@ -363,17 +453,18 @@ const createStyles = (colorScheme) =>
   StyleSheet.create({
     header: {
       marginTop: 20,
-      marginBottom: 32,
+      marginBottom: 16,
     },
     title: {
       ...fonts.heading.h1,
       color: colorScheme.text,
       marginBottom: 4,
     },
-    subtitle: {
+    totalUsers: {
       ...fonts.body.sm,
       color: colorScheme.textLight,
-      marginBottom: 2,
+      marginBottom: 8,
+      textAlign: "right",
     },
     errorBox: {
       backgroundColor: `${colorScheme.error}20`,
@@ -474,17 +565,7 @@ const createStyles = (colorScheme) =>
       backgroundColor: `${colorScheme.success}25`,
       borderColor: colorScheme.success,
     },
-    logoutButton: {
-      backgroundColor: colorScheme.error,
-      borderRadius: 8,
-      paddingVertical: 12,
-      alignItems: "center",
-      marginTop: 16,
-    },
-    logoutText: {
-      ...fonts.button,
-      color: colorScheme.background,
-    },
+
     loadMoreContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -495,6 +576,50 @@ const createStyles = (colorScheme) =>
     loadMoreText: {
       ...fonts.body.base,
       color: colorScheme.textLight,
+    },
+    filterContainer: {
+      marginBottom: 12,
+    },
+    searchInput: {
+      ...fonts.body.base,
+      backgroundColor: colorScheme.backgroundLight2,
+      borderColor: colorScheme.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colorScheme.text,
+      marginBottom: 2,
+    },
+    statusFilterContainer: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 32,
+      justifyContent: "space-between",
+    },
+    statusFilterButton: {
+      flex: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      backgroundColor: colorScheme.backgroundLight2,
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    statusFilterButtonActive: {
+      backgroundColor: colorScheme.primary,
+      borderColor: colorScheme.primary,
+    },
+    statusFilterButtonText: {
+      ...fonts.body.sm,
+      color: colorScheme.text,
+      fontWeight: "500",
+    },
+    statusFilterButtonTextActive: {
+      color: colorScheme.background,
+      fontWeight: "600",
     },
   });
 
