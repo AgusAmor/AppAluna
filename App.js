@@ -28,7 +28,7 @@ export default function App() {
           <AppNavigator />
           <StatusBar
             barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-            backgroundColor={colorScheme === "dark" ? "#0d0d0d" : "#ffffff"}
+            backgroundColor={colorScheme === "dark" ? "#2b2b2b" : "#f4f4f4"}
           />
         </AuthProvider>
       </SafeAreaProvider>

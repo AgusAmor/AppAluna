@@ -532,7 +532,7 @@ const createStyles = (colorScheme) =>
       borderRadius: 4,
     },
     statusActive: {
-      backgroundColor: colorScheme.success,
+      backgroundColor: colorScheme.accent,
       color: colorScheme.background,
     },
     statusSuspended: {

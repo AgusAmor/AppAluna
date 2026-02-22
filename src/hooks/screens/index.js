@@ -1,9 +1,9 @@
 /**
  * Screen hooks index
  * Central export point for all screen-related custom hooks
- * Re-exports hooks from organized subcategories (users, etc.)
+ * Re-exports hooks from organized subcategories (users, products, etc.)
  *
- * Usage: import { useUsersList, useUserModal } from "../hooks/screens";
+ * Usage: import { useUsersList, useProductsList } from "../hooks/screens";
  */
 
 export {
@@ -17,4 +17,5 @@ export {
   useUsersFilter,
   ACCOUNT_STATUS_FILTERS,
 } from "./users";
+export { useProductsList, useProductEdit } from "./products";
 export { useDashboardStats } from "./useDashboardStats";

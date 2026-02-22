@@ -38,8 +38,8 @@ export const themeConfig = {
   light: {
     // Backgrounds
     background: brandPalette.white,
-    backgroundLight: "#fafafa",
-    backgroundLight2: "#f3f4f6",
+    backgroundLight: "#fbfbfb",
+    backgroundLight2: "#eeeeee",
 
     // Text
     text: brandPalette.black,

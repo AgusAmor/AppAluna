@@ -102,13 +102,18 @@ export async function saveNewProduct(formData, authUser) {
  *
  * @param {string} productId - Product ID to update
  * @param {Object} formData - Updated product data
- * @param {Object} authUser - Firebase Auth user object (must be admin)
+ * @param {Object} authUser - Firebase Auth user object (for getting token if not provided)
+ * @param {string} token - Optional pre-obtained authentication token
  * @returns {Promise<Array>} - Updated list of products
  * @throws {Error} If update fails or user is not admin
  */
-export async function saveProductChanges(productId, formData, authUser) {
+export async function saveProductChanges(productId, formData, authUser, token) {
   try {
-    const token = await getAuthToken(authUser);
+    // Use provided token or get one from auth user
+    let authToken = token;
+    if (!authToken) {
+      authToken = await getAuthToken(authUser);
+    }
 
     const productData = {
       name: formData.name,
@@ -119,7 +124,7 @@ export async function saveProductChanges(productId, formData, authUser) {
       status: formData.status || "active",
     };
 
-    await updateProduct(productId, productData, token);
+    await updateProduct(productId, productData, authToken);
 
     // Reload and return all products
     const updatedProducts = await loadProducts();

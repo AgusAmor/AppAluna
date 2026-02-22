@@ -23,8 +23,8 @@ export function useFonts() {
     const loadFonts = async () => {
       try {
         await Font.loadAsync({
-          Comfortaa: Comfortaa_400Regular,
-          Sora: Sora_400Regular,
+          Comfortaa: Comfortaa_700Bold,
+          Sora: Sora_700Bold,
         });
         setFontsLoaded(true);
       } catch (error) {
