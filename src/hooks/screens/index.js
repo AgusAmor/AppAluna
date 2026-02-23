@@ -17,5 +17,11 @@ export {
   useUsersFilter,
   ACCOUNT_STATUS_FILTERS,
 } from "./users";
-export { useProductsList, useProductEdit } from "./products";
+export {
+  useProductsList,
+  useProductEdit,
+  useProductsFilter,
+  FAMILY_FILTERS,
+  PRICE_SORTS,
+} from "./products";
 export { useDashboardStats } from "./useDashboardStats";

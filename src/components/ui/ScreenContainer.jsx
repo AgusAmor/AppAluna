@@ -34,7 +34,6 @@ const ScreenContainer = ({
         {
           backgroundColor: bgColor,
           paddingTop: insets.top,
-          paddingBottom: insets.bottom,
         },
         style,
       ]}

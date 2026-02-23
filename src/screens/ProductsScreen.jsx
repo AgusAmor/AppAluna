@@ -9,7 +9,13 @@ import {
   Image,
 } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
-import { useProductsList, useProductEdit } from "../hooks/screens";
+import {
+  useProductsList,
+  useProductEdit,
+  useProductsFilter,
+  FAMILY_FILTERS,
+  PRICE_SORTS,
+} from "../hooks/screens";
 import { ProductEditModal } from "../components/modals";
 import { useThemeColors, fonts } from "../theme";
 
@@ -17,7 +23,14 @@ const ProductsScreen = () => {
   const { colorScheme } = useThemeColors();
   const styles = createStyles(colorScheme);
 
-  const { filteredProducts, loading, error } = useProductsList();
+  const { filteredProducts: allProducts, loading, error } = useProductsList();
+  const {
+    filteredProducts,
+    familyFilter,
+    setFamilyFilter,
+    priceSort,
+    setPriceSort,
+  } = useProductsFilter(allProducts);
   const {
     editForm,
     setEditForm,
@@ -100,6 +113,10 @@ const ProductsScreen = () => {
     [formatPrice, openEditModal],
   );
 
+  const handleAddProduct = useCallback(() => {
+    openEditModal({});
+  }, [openEditModal]);
+
   // Loading state
   if (loading) {
     return (
@@ -114,9 +131,6 @@ const ProductsScreen = () => {
       <ScreenContainer>
         <View style={styles.header}>
           <Text style={styles.title}>Gestión de Productos</Text>
-          <Text style={styles.subtitle}>
-            Total: {filteredProducts.length} productos
-          </Text>
         </View>
 
         {error && (
@@ -124,6 +138,124 @@ const ProductsScreen = () => {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
+
+        {/* Filter Controls */}
+        <View style={styles.filterContainer}>
+          <Text style={styles.totalProducts}>
+            Total: {filteredProducts.length} productos
+          </Text>
+        </View>
+
+        {/* Price Sort Buttons */}
+        <View style={styles.priceFilterContainer}>
+          <TouchableOpacity
+            style={[
+              styles.priceFilterButton,
+              priceSort === PRICE_SORTS.ASC && styles.priceFilterButtonActive,
+            ]}
+            onPress={() =>
+              setPriceSort(
+                priceSort === PRICE_SORTS.ASC
+                  ? PRICE_SORTS.NONE
+                  : PRICE_SORTS.ASC,
+              )
+            }
+          >
+            <Text
+              style={[
+                styles.priceFilterButtonText,
+                priceSort === PRICE_SORTS.ASC &&
+                  styles.priceFilterButtonTextActive,
+              ]}
+            >
+              Menor a Mayor
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.priceFilterButton,
+              priceSort === PRICE_SORTS.DESC && styles.priceFilterButtonActive,
+            ]}
+            onPress={() =>
+              setPriceSort(
+                priceSort === PRICE_SORTS.DESC
+                  ? PRICE_SORTS.NONE
+                  : PRICE_SORTS.DESC,
+              )
+            }
+          >
+            <Text
+              style={[
+                styles.priceFilterButtonText,
+                priceSort === PRICE_SORTS.DESC &&
+                  styles.priceFilterButtonTextActive,
+              ]}
+            >
+              Mayor a Menor
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Family Filter Buttons */}
+        <View style={styles.statusFilterContainer}>
+          <TouchableOpacity
+            style={[
+              styles.statusFilterButton,
+              familyFilter === FAMILY_FILTERS.ALL &&
+                styles.statusFilterButtonActive,
+            ]}
+            onPress={() => setFamilyFilter(FAMILY_FILTERS.ALL)}
+          >
+            <Text
+              style={[
+                styles.statusFilterButtonText,
+                familyFilter === FAMILY_FILTERS.ALL &&
+                  styles.statusFilterButtonTextActive,
+              ]}
+            >
+              Todos
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.statusFilterButton,
+              familyFilter === FAMILY_FILTERS.AENOR &&
+                styles.statusFilterButtonActive,
+            ]}
+            onPress={() => setFamilyFilter(FAMILY_FILTERS.AENOR)}
+          >
+            <Text
+              style={[
+                styles.statusFilterButtonText,
+                familyFilter === FAMILY_FILTERS.AENOR &&
+                  styles.statusFilterButtonTextActive,
+              ]}
+            >
+              AENOR
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.statusFilterButton,
+              familyFilter === FAMILY_FILTERS.CORE &&
+                styles.statusFilterButtonActive,
+            ]}
+            onPress={() => setFamilyFilter(FAMILY_FILTERS.CORE)}
+          >
+            <Text
+              style={[
+                styles.statusFilterButtonText,
+                familyFilter === FAMILY_FILTERS.CORE &&
+                  styles.statusFilterButtonTextActive,
+              ]}
+            >
+              CORE
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {filteredProducts.length === 0 ? (
           <View style={styles.emptyState}>
@@ -135,6 +267,7 @@ const ProductsScreen = () => {
             renderItem={renderProductItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.productsList}
+            style={styles.flatList}
             scrollEnabled={true}
             removeClippedSubviews={true}
             initialNumToRender={5}
@@ -159,6 +292,13 @@ const ProductsScreen = () => {
         onRemoveImage={handleRemoveImage}
         isPickingImage={isPickingImage}
       />
+
+      <TouchableOpacity
+        style={styles.addProductButton}
+        onPress={handleAddProduct}
+      >
+        <Text style={styles.addProductButtonText}>+ Agregar Producto</Text>
+      </TouchableOpacity>
     </>
   );
 };
@@ -167,17 +307,12 @@ const createStyles = (colorScheme) =>
   StyleSheet.create({
     header: {
       marginTop: 20,
-      marginBottom: 32,
+      marginBottom: 2,
     },
     title: {
       ...fonts.heading.h1,
       color: colorScheme.text,
       marginBottom: 4,
-    },
-    subtitle: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-      marginBottom: 2,
     },
     errorBox: {
       backgroundColor: `${colorScheme.error}20`,
@@ -200,9 +335,12 @@ const createStyles = (colorScheme) =>
       ...fonts.body.base,
       color: colorScheme.textLight,
     },
+    flatList: {
+      flex: 1,
+    },
     productsList: {
       gap: 12,
-      paddingBottom: 20,
+      paddingBottom: 0,
     },
     productCard: {
       backgroundColor: colorScheme.backgroundLight2,
@@ -256,6 +394,93 @@ const createStyles = (colorScheme) =>
     productPrice: {
       ...fonts.heading.h4,
       color: colorScheme.accent,
+      fontWeight: "600",
+    },
+    filterContainer: {
+      marginBottom: 2,
+    },
+    totalProducts: {
+      ...fonts.body.sm,
+      color: colorScheme.textLight,
+      marginBottom: 8,
+      textAlign: "right",
+    },
+    statusFilterContainer: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 16,
+      justifyContent: "space-between",
+    },
+    statusFilterButton: {
+      flex: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      backgroundColor: colorScheme.backgroundLight2,
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    statusFilterButtonActive: {
+      backgroundColor: colorScheme.primary,
+      borderColor: colorScheme.primary,
+    },
+    statusFilterButtonText: {
+      ...fonts.body.sm,
+      color: colorScheme.text,
+      fontWeight: "500",
+    },
+    statusFilterButtonTextActive: {
+      color: colorScheme.background,
+      fontWeight: "600",
+    },
+    priceFilterContainer: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 8,
+      justifyContent: "space-between",
+    },
+    priceFilterButton: {
+      flex: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      backgroundColor: colorScheme.backgroundLight2,
+      borderWidth: 1,
+      borderColor: colorScheme.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    priceFilterButtonActive: {
+      backgroundColor: colorScheme.primary,
+      borderColor: colorScheme.primary,
+    },
+    priceFilterButtonText: {
+      ...fonts.body.sm,
+      color: colorScheme.text,
+      fontWeight: "500",
+    },
+    priceFilterButtonTextActive: {
+      color: colorScheme.background,
+      fontWeight: "600",
+    },
+    addProductButton: {
+      position: "absolute",
+      bottom: 10,
+      left: "15%",
+      backgroundColor: colorScheme.accent,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      borderRadius: 8,
+      alignItems: "center",
+      zIndex: 100,
+      width: "70%",
+      alignSelf: "center",
+    },
+    addProductButtonText: {
+      ...fonts.heading.h4,
+      color: colorScheme.background,
       fontWeight: "600",
     },
   });

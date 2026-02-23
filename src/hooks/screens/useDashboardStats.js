@@ -119,16 +119,33 @@ export function useDashboardStats() {
       // Registered users
       const registeredUsers = usersList?.length || 0;
 
-      // Monthly revenue
-      const monthlyRevenue =
-        ordersList?.reduce((total, order) => {
+      // Monthly revenue - sum items from all orders in current month
+      const currentMonth = new Date();
+      const firstDayOfMonth = new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth(),
+        1,
+      );
+
+      let monthlyRevenue = 0;
+
+      if (ordersList && Array.isArray(ordersList)) {
+        ordersList.forEach((order) => {
           const orderDate = new Date(order.createdAt || order.created_at);
-          const currentDate = new Date();
-          const isCurrentMonth =
-            orderDate.getMonth() === currentDate.getMonth() &&
-            orderDate.getFullYear() === currentDate.getFullYear();
-          return isCurrentMonth ? total + (order.total || 0) : total;
-        }, 0) || 0;
+
+          // Check if order is within current month (from first day to today)
+          if (orderDate >= firstDayOfMonth && orderDate <= new Date()) {
+            // Sum total from all items in the order
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item) => {
+                const itemPrice = item.unitPrice || item.price || 0;
+                const quantity = item.quantity || 1;
+                monthlyRevenue += itemPrice * quantity;
+              });
+            }
+          }
+        });
+      }
 
       setStats({
         totalProducts,

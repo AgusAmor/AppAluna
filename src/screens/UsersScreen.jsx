@@ -565,7 +565,6 @@ const createStyles = (colorScheme) =>
       backgroundColor: `${colorScheme.success}25`,
       borderColor: colorScheme.success,
     },
-
     loadMoreContainer: {
       flexDirection: "row",
       alignItems: "center",
