@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -105,7 +105,7 @@ const FamilySelect = ({ value, onChange, disabled, colorScheme, hasError }) => {
               style={[
                 familyStyles.option,
                 option.value === value && {
-                  backgroundColor: colorScheme.primary + "20",
+                  backgroundColor: colorScheme.accent + "20",
                 },
               ]}
               onPress={() => {
@@ -119,7 +119,7 @@ const FamilySelect = ({ value, onChange, disabled, colorScheme, hasError }) => {
                   {
                     color:
                       option.value === value
-                        ? colorScheme.primary
+                        ? colorScheme.accent
                         : colorScheme.text,
                   },
                 ]}
@@ -147,6 +147,7 @@ const ProductEditModal = ({
   editForm,
   onFormChange,
   onSave,
+  onDelete,
   isSaving,
   imagePreview,
   setImagePreview,
@@ -159,6 +160,32 @@ const ProductEditModal = ({
   const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [imageLoading, setImageLoading] = useState(false);
+
+  // Effect: Validate all fields when modal opens or form changes
+  useEffect(() => {
+    if (visible) {
+      // Validate all required fields
+      const newErrors = {};
+
+      if (!editForm?.name?.trim()) newErrors.name = "El nombre es requerido";
+      if (!editForm?.description?.trim())
+        newErrors.description = "La descripción es requerida";
+      if (!editForm?.family?.trim())
+        newErrors.family = "La familia es requerida";
+      if (!editForm?.pricing?.normal?.price)
+        newErrors.priceNormal = "El precio normal es requerido";
+      if (!editForm?.pricing?.small?.price)
+        newErrors.priceSmall = "El precio small es requerido";
+      if (!editForm?.pricing?.normal?.size?.trim())
+        newErrors.sizeNormal = "La medida normal es requerida";
+      if (!editForm?.pricing?.small?.size?.trim())
+        newErrors.sizeSmall = "La medida small es requerida";
+      if (!imagePreview) newErrors.image = "La imagen es requerida";
+
+      setFieldErrors(newErrors);
+    }
+  }, [visible, editForm, imagePreview]);
 
   // Validate fields in real-time
   const validateField = useCallback((fieldName, value) => {
@@ -177,16 +204,46 @@ const ProductEditModal = ({
         error = validateRequired(value, "La familia");
         break;
 
+      case "sizeNormal":
+      case "sizeSmall":
+        // Sizes are required
+        error = validateRequired(
+          value,
+          fieldName === "sizeNormal" ? "La medida normal" : "La medida small",
+        );
+        break;
+
       case "priceNormal":
       case "priceSmall":
-        // Prices are optional, but if provided, must be valid numbers
-        if (value && value.trim() !== "") {
+        // Prices are required and must be valid numbers
+        if (!value || value.trim() === "") {
+          error =
+            fieldName === "priceNormal"
+              ? "El precio normal es requerido"
+              : "El precio small es requerido";
+        } else {
           const numValue = parseFloat(value);
-          if (isNaN(numValue) || numValue < 0) {
+          if (isNaN(numValue) || numValue <= 0) {
             error = "El precio debe ser un número válido mayor a 0";
           }
         }
         break;
+
+      case "image":
+        // Image is required
+        error = !value ? "La imagen es requerida" : null;
+        if (error) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            image: error,
+          }));
+        } else {
+          setFieldErrors((prev) => {
+            const { image, ...rest } = prev;
+            return rest;
+          });
+        }
+        return error;
 
       default:
         break;
@@ -210,7 +267,7 @@ const ProductEditModal = ({
           ...editForm,
           pricing: {
             ...editForm.pricing,
-            normal: { price: value },
+            normal: { ...editForm.pricing.normal, price: value },
           },
         };
       } else if (fieldName === "priceSmall") {
@@ -218,7 +275,23 @@ const ProductEditModal = ({
           ...editForm,
           pricing: {
             ...editForm.pricing,
-            small: { price: value },
+            small: { ...editForm.pricing.small, price: value },
+          },
+        };
+      } else if (fieldName === "sizeNormal") {
+        newForm = {
+          ...editForm,
+          pricing: {
+            ...editForm.pricing,
+            normal: { ...editForm.pricing.normal, size: value },
+          },
+        };
+      } else if (fieldName === "sizeSmall") {
+        newForm = {
+          ...editForm,
+          pricing: {
+            ...editForm.pricing,
+            small: { ...editForm.pricing.small, size: value },
           },
         };
       } else {
@@ -247,9 +320,17 @@ const ProductEditModal = ({
         parseFloat(product.pricing?.normal?.price || 0) ||
       parseFloat(editForm.pricing?.small?.price || 0) !==
         parseFloat(product.pricing?.small?.price || 0) ||
+      (editForm.pricing?.normal?.size || "") !==
+        (product.pricing?.normal?.size || "") ||
+      (editForm.pricing?.small?.size || "") !==
+        (product.pricing?.small?.size || "") ||
       imagePreview !== product.imageUrl
     );
   }, [editForm, product, imagePreview]);
+
+  // Determine if this is a new product or editing an existing one
+  const isNewProduct = !product?.id;
+  const modalTitle = isNewProduct ? "Agregar Producto" : "Editar Producto";
 
   if (!visible || !product) return null;
 
@@ -280,7 +361,7 @@ const ProductEditModal = ({
         >
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Editar Producto</Text>
+            <Text style={styles.modalTitle}>{modalTitle}</Text>
             <TouchableOpacity
               onPress={onClose}
               disabled={isSaving}
@@ -359,7 +440,7 @@ const ProductEditModal = ({
                 <Text style={styles.sectionTitle}>Precios</Text>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.label}>Precio Normal</Text>
+                  <Text style={styles.label}>Normal</Text>
                   <View style={styles.priceInputContainer}>
                     <Text style={styles.currencySymbol}>$</Text>
                     <TextInput
@@ -386,7 +467,29 @@ const ProductEditModal = ({
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.label}>Precio Small</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      fieldErrors.sizeNormal && styles.inputError,
+                    ]}
+                    placeholder="24cm x 11,5cm x 11,5cm"
+                    placeholderTextColor={colorScheme.textLight}
+                    value={editForm.pricing?.normal?.size || ""}
+                    onChangeText={(value) =>
+                      handleFieldChange("sizeNormal", value)
+                    }
+                    editable={!isSaving}
+                    maxLength={100}
+                  />
+                  {fieldErrors.sizeNormal && (
+                    <Text style={styles.errorText}>
+                      {fieldErrors.sizeNormal}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Small</Text>
                   <View style={styles.priceInputContainer}>
                     <Text style={styles.currencySymbol}>$</Text>
                     <TextInput
@@ -411,6 +514,28 @@ const ProductEditModal = ({
                     </Text>
                   )}
                 </View>
+
+                <View style={styles.fieldGroup}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      fieldErrors.sizeSmall && styles.inputError,
+                    ]}
+                    placeholder="17cm x 9,5cm x 9,5cm"
+                    placeholderTextColor={colorScheme.textLight}
+                    value={editForm.pricing?.small?.size || ""}
+                    onChangeText={(value) =>
+                      handleFieldChange("sizeSmall", value)
+                    }
+                    editable={!isSaving}
+                    maxLength={100}
+                  />
+                  {fieldErrors.sizeSmall && (
+                    <Text style={styles.errorText}>
+                      {fieldErrors.sizeSmall}
+                    </Text>
+                  )}
+                </View>
               </View>
 
               {/* Image Section */}
@@ -418,15 +543,46 @@ const ProductEditModal = ({
                 <Text style={styles.sectionTitle}>Imagen del Producto</Text>
 
                 {/* Image Preview */}
-                {imagePreview ? (
+                {imagePreview && typeof imagePreview === "string" ? (
                   <View style={styles.imagePreviewContainer}>
+                    {imageLoading && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          marginLeft: -15,
+                          marginTop: -15,
+                          zIndex: 10,
+                        }}
+                      >
+                        <ActivityIndicator
+                          size="large"
+                          color={colorScheme.primary}
+                        />
+                      </View>
+                    )}
                     <Image
                       source={{
-                        uri: imagePreview.startsWith("http")
-                          ? imagePreview
-                          : `file://${imagePreview}`,
+                        uri: imagePreview,
                       }}
-                      style={styles.imagePreview}
+                      style={{ width: "100%", height: "100%" }}
+                      resizeMode="cover"
+                      onLoadStart={() => setImageLoading(true)}
+                      onLoadEnd={() => setImageLoading(false)}
+                      onError={(error) => {
+                        console.error(
+                          "Image loading error:",
+                          error,
+                          "URI:",
+                          imagePreview,
+                        );
+                        setImageLoading(false);
+                      }}
+                      progressiveRenderingEnabled={true}
+                      defaultSource={{
+                        uri: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                      }}
                     />
                     <TouchableOpacity
                       style={styles.removeImageButton}
@@ -447,6 +603,11 @@ const ProductEditModal = ({
                       Sin imagen seleccionada
                     </Text>
                   </View>
+                )}
+
+                {/* Image Error Message */}
+                {fieldErrors.image && (
+                  <Text style={styles.errorText}>{fieldErrors.image}</Text>
                 )}
 
                 {/* Image Action Buttons */}
@@ -476,37 +637,54 @@ const ProductEditModal = ({
                   </TouchableOpacity>
                 </View>
               </View>
+              <View style={styles.deleteSection}>
+                <Text style={styles.deleteTitle}>Eliminar Producto</Text>
+                {!isNewProduct && (
+                  <TouchableOpacity
+                    style={[
+                      styles.deleteButton,
+                      isSaving && styles.buttonDisabled,
+                    ]}
+                    onPress={onDelete}
+                    disabled={isSaving}
+                  >
+                    <Text style={styles.deleteButtonText}>Eliminar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </ScrollView>
           </TouchableWithoutFeedback>
 
           {/* Action Buttons */}
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.cancelButton, isSaving && styles.buttonDisabled]}
-              onPress={onClose}
-              disabled={isSaving}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
+          <View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.cancelButton, isSaving && styles.buttonDisabled]}
+                onPress={onClose}
+                disabled={isSaving}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.saveButton,
-                (isSaving || hasErrors || !isFormModified) &&
-                  styles.buttonDisabled,
-              ]}
-              onPress={onSave}
-              disabled={isSaving || hasErrors || !isFormModified}
-            >
-              {isSaving ? (
-                <ActivityIndicator
-                  color={colorScheme.background}
-                  size="small"
-                />
-              ) : (
-                <Text style={styles.saveButtonText}>Guardar</Text>
-              )}
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  (isSaving || hasErrors || !isFormModified) &&
+                    styles.buttonDisabled,
+                ]}
+                onPress={onSave}
+                disabled={isSaving || hasErrors || !isFormModified}
+              >
+                {isSaving ? (
+                  <ActivityIndicator
+                    color={colorScheme.background}
+                    size="small"
+                  />
+                ) : (
+                  <Text style={styles.saveButtonText}>Guardar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -527,7 +705,7 @@ const createStyles = (colorScheme) =>
       borderTopRightRadius: 20,
       padding: 24,
       paddingBottom: 0,
-      height: "80%",
+      flex: 1,
       shadowColor: colorScheme.primary,
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.15,
@@ -557,17 +735,18 @@ const createStyles = (colorScheme) =>
     formContainer: {
       marginBottom: 20,
       flex: 1,
+      minHeight: Platform.OS === "android" ? 300 : undefined,
     },
     scrollContent: {
       paddingVertical: 16,
       paddingBottom: 8,
     },
     fieldGroup: {
-      marginBottom: 16,
+      marginBottom: 8,
     },
     label: {
       ...fonts.body.sm,
-      color: colorScheme.text,
+      color: colorScheme.primary,
       marginBottom: 8,
       fontWeight: "600",
       letterSpacing: 0.3,
@@ -578,7 +757,6 @@ const createStyles = (colorScheme) =>
       borderRadius: 10,
       padding: 12,
       fontSize: 14,
-      marginBottom: 16,
       color: colorScheme.text,
       backgroundColor: colorScheme.backgroundLight,
       fontWeight: "500",
@@ -590,8 +768,7 @@ const createStyles = (colorScheme) =>
     errorText: {
       ...fonts.body.sm,
       color: colorScheme.error,
-      marginTop: -12,
-      marginBottom: 12,
+      marginTop: 4,
       fontWeight: "500",
     },
     textAreaInput: {
@@ -600,12 +777,11 @@ const createStyles = (colorScheme) =>
       height: 100,
     },
     pricingSection: {
-      marginTop: 20,
-      marginBottom: 20,
+      marginVertical: 8,
     },
     sectionTitle: {
       ...fonts.heading.h3,
-      color: colorScheme.text,
+      color: colorScheme.primaryDark,
       marginBottom: 12,
     },
     priceInputContainer: {
@@ -634,9 +810,36 @@ const createStyles = (colorScheme) =>
     modalFooter: {
       flexDirection: "row",
       gap: 12,
-      paddingTop: 12,
+      paddingTop: 8,
       borderTopWidth: 1,
       borderTopColor: colorScheme.border + "30",
+    },
+    deleteSection: {
+      marginBottom: 12,
+      marginTop: 32,
+    },
+    deleteTitle: {
+      ...fonts.heading.h3,
+      color: colorScheme.error,
+      marginBottom: 6,
+      textAlign: "center",
+    },
+    deleteButton: {
+      width: "100%",
+      paddingVertical: 12,
+      borderRadius: 10,
+      backgroundColor: colorScheme.error,
+      alignItems: "center",
+      shadowColor: colorScheme.error,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    deleteButtonText: {
+      ...fonts.button,
+      color: colorScheme.background,
+      fontWeight: "600",
     },
     cancelButton: {
       flex: 1,
@@ -673,8 +876,7 @@ const createStyles = (colorScheme) =>
       opacity: 0.6,
     },
     imageSection: {
-      marginTop: 20,
-      marginBottom: 20,
+      marginVertical: 8,
     },
     imagePreviewContainer: {
       position: "relative",
@@ -688,7 +890,6 @@ const createStyles = (colorScheme) =>
     imagePreview: {
       width: "100%",
       height: "100%",
-      resizeMode: "cover",
     },
     removeImageButton: {
       position: "absolute",

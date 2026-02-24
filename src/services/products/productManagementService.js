@@ -66,13 +66,17 @@ export async function loadProductById(productId) {
  * Only admins can create products
  *
  * @param {Object} formData - Product form data
- * @param {Object} authUser - Firebase Auth user object (must be admin)
+ * @param {Object} authUser - Firebase Auth user object (for reference)
+ * @param {string} token - Firebase Auth token (pre-obtained)
  * @returns {Promise<Object>} - Result with new product id
  * @throws {Error} If creation fails or user is not admin
  */
-export async function saveNewProduct(formData, authUser) {
+export async function saveNewProduct(formData, authUser, token) {
   try {
-    const token = await getAuthToken(authUser);
+    // Use provided token
+    if (!token) {
+      throw new Error("Authentication token is required");
+    }
 
     // Validate required fields
     if (!formData.name || !formData.description || !formData.family) {

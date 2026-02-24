@@ -39,6 +39,7 @@ const ProductsScreen = () => {
     closeEditModal,
     isSaving,
     handleSaveProduct,
+    handleDeleteProduct,
     selectedProduct,
     imagePreview,
     setImagePreview,
@@ -284,6 +285,7 @@ const ProductsScreen = () => {
         editForm={editForm}
         onFormChange={setEditForm}
         onSave={handleSaveProduct}
+        onDelete={handleDeleteProduct}
         isSaving={isSaving}
         imagePreview={imagePreview}
         setImagePreview={setImagePreview}
@@ -453,8 +455,8 @@ const createStyles = (colorScheme) =>
       justifyContent: "center",
     },
     priceFilterButtonActive: {
-      backgroundColor: colorScheme.primary,
-      borderColor: colorScheme.primary,
+      backgroundColor: colorScheme.accent,
+      borderColor: colorScheme.accent,
     },
     priceFilterButtonText: {
       ...fonts.body.sm,

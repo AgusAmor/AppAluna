@@ -8,10 +8,15 @@
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import { useAuth } from "../../../context/AuthContext";
-import { saveProductChanges } from "../../../services/products";
+import {
+  saveProductChanges,
+  saveNewProduct,
+} from "../../../services/products";
 import {
   uploadProductImageMobile,
   replaceProductImageMobile,
+  deleteProductImage,
+  deleteProduct,
 } from "../../../services/firebase/firebaseProductService";
 import { validateRequired } from "../../../utils/validationService";
 import { useImagePicker } from "../../loading/useImagePicker";
@@ -80,8 +85,8 @@ export function useProductEdit() {
     family: "",
     imageUrl: "",
     pricing: {
-      normal: { price: "" },
-      small: { price: "" },
+      normal: { price: "", size: "24cm x 11,5cm x 11,5cm" },
+      small: { price: "", size: "17cm x 9,5cm x 9,5cm" },
     },
     status: "active",
   });
@@ -97,8 +102,14 @@ export function useProductEdit() {
       family: product.family || "",
       imageUrl: product.imageUrl || "",
       pricing: {
-        normal: { price: product.pricing?.normal?.price || "" },
-        small: { price: product.pricing?.small?.price || "" },
+        normal: {
+          price: product.pricing?.normal?.price || "",
+          size: product.pricing?.normal?.size || "24cm x 11,5cm x 11,5cm",
+        },
+        small: {
+          price: product.pricing?.small?.price || "",
+          size: product.pricing?.small?.size || "17cm x 9,5cm x 9,5cm",
+        },
       },
       status: product.status || "active",
     });
@@ -117,8 +128,8 @@ export function useProductEdit() {
       family: "",
       imageUrl: "",
       pricing: {
-        normal: { price: "" },
-        small: { price: "" },
+        normal: { price: "", size: "24cm x 11,5cm x 11,5cm" },
+        small: { price: "", size: "17cm x 9,5cm x 9,5cm" },
       },
       status: "active",
     });
@@ -187,23 +198,23 @@ export function useProductEdit() {
         (imagePreview.startsWith("file://") ||
           imagePreview.startsWith("content://"));
 
-      if (isNewImage) {
-        // Upload new image and get URL
-        if (imagePreview) {
-          // Replace existing image or upload new one
-          if (selectedProduct.imageUrl) {
-            finalImageUrl = await replaceProductImageMobile(
-              imagePreview,
-              selectedProduct.id,
-              selectedProduct.imageUrl,
-            );
-          } else {
-            finalImageUrl = await uploadProductImageMobile(
-              imagePreview,
-              selectedProduct.id,
-            );
-          }
-        }
+      // Detect if this is a new product (no ID)
+      const isNewProduct = !selectedProduct.id;
+
+      if (isNewImage && imagePreview) {
+        // Upload new image for new products
+        // Note: For new products, we upload with a temporary ID and will get a real ID from Firebase
+        finalImageUrl = await uploadProductImageMobile(
+          imagePreview,
+          selectedProduct.id || "temp",
+        );
+      } else if (isNewImage && selectedProduct.id) {
+        // Replace existing image for existing products
+        finalImageUrl = await replaceProductImageMobile(
+          imagePreview,
+          selectedProduct.id,
+          selectedProduct.imageUrl,
+        );
       }
 
       // Create update payload with final image URL
@@ -212,9 +223,22 @@ export function useProductEdit() {
         imageUrl: finalImageUrl,
       };
 
-      // Save product to database
-      await saveProductChanges(selectedProduct.id, updatePayload, user, token);
-      Alert.alert("Éxito", "Producto actualizado correctamente");
+      // Save product based on whether it's new or existing
+      if (isNewProduct) {
+        // Create a new product
+        await saveNewProduct(updatePayload, user, token);
+        Alert.alert("Éxito", "Producto creado correctamente");
+      } else {
+        // Update existing product
+        await saveProductChanges(
+          selectedProduct.id,
+          updatePayload,
+          user,
+          token,
+        );
+        Alert.alert("Éxito", "Producto actualizado correctamente");
+      }
+
       closeEditModal();
     } catch (error) {
       const friendlyMessage = mapErrorMessage(error.message);
@@ -225,6 +249,60 @@ export function useProductEdit() {
     }
   }, [selectedProduct, editForm, imagePreview, user, getToken, closeEditModal]);
 
+  const handleDeleteProduct = useCallback(async () => {
+    if (!selectedProduct?.id) return;
+
+    Alert.alert(
+      "Eliminar Producto",
+      `¿Estás seguro de que deseas eliminar "${selectedProduct.name}"? Esta acción no se puede deshacer.`,
+      [
+        {
+          text: "Cancelar",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          onPress: async () => {
+            setIsSaving(true);
+            try {
+              if (!user) {
+                Alert.alert("Error", "Usuario no autenticado");
+                return;
+              }
+
+              // Get authentication token
+              const token = await getToken();
+              if (!token) {
+                Alert.alert("Error", "No se pudo obtener el token de autenticación");
+                return;
+              }
+
+              // Delete image from Storage if exists
+              if (selectedProduct.imageUrl) {
+                try {
+                  await deleteProductImage(selectedProduct.imageUrl);
+                } catch (err) {
+                  console.warn("Warning: could not delete image:", err);
+                }
+              }
+
+              // Delete product from Firestore via Cloud Function
+              await deleteProduct(selectedProduct.id, token);
+              Alert.alert("Éxito", "Producto eliminado correctamente");
+              closeEditModal();
+            } catch (error) {
+              Alert.alert("Error", "No se pudo eliminar el producto");
+              console.error("Error deleting product:", error);
+            } finally {
+              setIsSaving(false);
+            }
+          },
+          style: "destructive",
+        },
+      ],
+    );
+  }, [selectedProduct, user, getToken, closeEditModal]);
   return {
     editForm,
     setEditForm,
@@ -233,6 +311,7 @@ export function useProductEdit() {
     closeEditModal,
     isSaving,
     handleSaveProduct,
+    handleDeleteProduct,
     selectedProduct,
     imagePreview,
     setImagePreview,
