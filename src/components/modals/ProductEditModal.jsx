@@ -12,7 +12,6 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Image,
-  FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -44,7 +43,6 @@ const FamilySelect = ({ value, onChange, disabled, colorScheme, hasError }) => {
       borderColor: hasError ? colorScheme.error : colorScheme.border,
       borderRadius: 10,
       padding: 12,
-      marginBottom: 16,
       backgroundColor: colorScheme.backgroundLight,
       flexDirection: "row",
       justifyContent: "space-between",
@@ -637,9 +635,9 @@ const ProductEditModal = ({
                   </TouchableOpacity>
                 </View>
               </View>
-              <View style={styles.deleteSection}>
-                <Text style={styles.deleteTitle}>Eliminar Producto</Text>
-                {!isNewProduct && (
+              {!isNewProduct && (
+                <View style={styles.deleteSection}>
+                  <Text style={styles.deleteTitle}>Eliminar Producto</Text>
                   <TouchableOpacity
                     style={[
                       styles.deleteButton,
@@ -650,8 +648,8 @@ const ProductEditModal = ({
                   >
                     <Text style={styles.deleteButtonText}>Eliminar</Text>
                   </TouchableOpacity>
-                )}
-              </View>
+                </View>
+              )}
             </ScrollView>
           </TouchableWithoutFeedback>
 
@@ -885,7 +883,6 @@ const createStyles = (colorScheme) =>
       backgroundColor: colorScheme.backgroundLight,
       borderRadius: 10,
       overflow: "hidden",
-      marginBottom: 12,
     },
     imagePreview: {
       width: "100%",
@@ -911,7 +908,6 @@ const createStyles = (colorScheme) =>
       borderRadius: 10,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 12,
       borderWidth: 1,
       borderColor: colorScheme.border,
       borderStyle: "dashed",
@@ -927,6 +923,7 @@ const createStyles = (colorScheme) =>
     imageButtonsContainer: {
       flexDirection: "row",
       gap: 10,
+      marginTop: 8,
     },
     imageActionButton: {
       flex: 1,

@@ -8,10 +8,7 @@
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 import { useAuth } from "../../../context/AuthContext";
-import {
-  saveProductChanges,
-  saveNewProduct,
-} from "../../../services/products";
+import { saveProductChanges, saveNewProduct } from "../../../services/products";
 import {
   uploadProductImageMobile,
   replaceProductImageMobile,
@@ -274,7 +271,10 @@ export function useProductEdit() {
               // Get authentication token
               const token = await getToken();
               if (!token) {
-                Alert.alert("Error", "No se pudo obtener el token de autenticación");
+                Alert.alert(
+                  "Error",
+                  "No se pudo obtener el token de autenticación",
+                );
                 return;
               }
 

@@ -2,6 +2,7 @@
  * orderManagementService.js
  * Business logic for order management
  * Orchestrates order operations and data transformations
+ * Adapted for React Native mobile app
  */
 
 import {
@@ -25,17 +26,36 @@ export const ORDER_STATUS = {
   CANCELLED: "cancelled",
 };
 
+// Status display labels in Spanish
+export const ORDER_STATUS_LABELS = {
+  pending: "Pendiente",
+  confirmed: "Confirmado",
+  processing: "En Procesamiento",
+  shipped: "Enviado",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+};
+
 /**
- * Loads all orders from Firestore (admin view)
- * @returns {Promise<Array>} - Array of order objects with id property
- * @throws {Error} If orders cannot be fetched
+ * Loads all orders from Firebase (admin view)
+ * Requires admin authentication
+ * @param {Object} authUser - Firebase Auth user object (must be admin)
+ * @returns {Promise<Array>} - Array of order objects with id property, sorted newest first
+ * @throws {Error} If orders cannot be fetched or user is not admin
  */
-export async function loadAllOrders() {
+export async function loadAllOrders(authUser) {
   try {
-    const orders = await fetchAllOrders();
-    return orders.sort((a, b) => {
-      const dateA = a.createdAt?.toDate?.() || new Date(0);
-      const dateB = b.createdAt?.toDate?.() || new Date(0);
+    const token = await getAuthToken(authUser);
+    const orders = await fetchAllOrders(token);
+
+    // Ensure orders is an array
+    const ordersList = Array.isArray(orders) ? orders : [];
+
+    return ordersList.sort((a, b) => {
+      const dateA =
+        a.createdAt?.toDate?.() || new Date(a.createdAt) || new Date(0);
+      const dateB =
+        b.createdAt?.toDate?.() || new Date(b.createdAt) || new Date(0);
       return dateB - dateA; // Sort newest first
     });
   } catch (error) {
@@ -49,10 +69,12 @@ export async function loadAllOrders() {
  * Perfect for syncing when other admins change order status
  *
  * @param {Function} callback - Called with orders array whenever data changes
+ * @param {Object} authUser - Firebase Auth user object (must be admin)
  * @returns {Function} Unsubscribe function - call to stop listening
  */
-export function subscribeToOrders(callback) {
+export function subscribeToOrders(callback, authUser) {
   try {
+    // Token validation happens in listenToOrders when polling starts
     return listenToOrders(callback);
   } catch (error) {
     console.error("Error subscribing to orders:", error);
@@ -61,17 +83,24 @@ export function subscribeToOrders(callback) {
 }
 
 /**
- * Loads orders for a specific user
- * @param {string} userId - User ID
- * @returns {Promise<Array>} - Array of user's order objects
+ * Loads orders for the current authenticated user
+ * @param {Object} authUser - Firebase Auth user object
+ * @returns {Promise<Array>} - Array of user's order objects, sorted newest first
  * @throws {Error} If orders cannot be fetched
  */
-export async function loadUserOrdersById(userId) {
+export async function loadUserOrdersById(authUser) {
   try {
-    const orders = await fetchUserOrders(userId);
-    return orders.sort((a, b) => {
-      const dateA = a.createdAt?.toDate?.() || new Date(0);
-      const dateB = b.createdAt?.toDate?.() || new Date(0);
+    const token = await getAuthToken(authUser);
+    const orders = await fetchUserOrders(token);
+
+    // Ensure orders is an array
+    const ordersList = Array.isArray(orders) ? orders : [];
+
+    return ordersList.sort((a, b) => {
+      const dateA =
+        a.createdAt?.toDate?.() || new Date(a.createdAt) || new Date(0);
+      const dateB =
+        b.createdAt?.toDate?.() || new Date(b.createdAt) || new Date(0);
       return dateB - dateA;
     });
   } catch (error) {

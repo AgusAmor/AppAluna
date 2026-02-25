@@ -25,3 +25,9 @@ export {
   PRICE_SORTS,
 } from "./products";
 export { useDashboardStats } from "./useDashboardStats";
+export { useOrdersList } from "./useOrdersList";
+export {
+  useOrdersFilter,
+  ORDER_STATUS_FILTERS,
+  STATUS_SORTS,
+} from "./useOrdersFilter";

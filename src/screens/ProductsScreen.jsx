@@ -342,7 +342,7 @@ const createStyles = (colorScheme) =>
     },
     productsList: {
       gap: 12,
-      paddingBottom: 0,
+      paddingBottom: 65,
     },
     productCard: {
       backgroundColor: colorScheme.backgroundLight2,
@@ -472,7 +472,7 @@ const createStyles = (colorScheme) =>
       bottom: 10,
       left: "15%",
       backgroundColor: colorScheme.accent,
-      paddingVertical: 12,
+      paddingVertical: 10,
       paddingHorizontal: 14,
       borderRadius: 8,
       alignItems: "center",

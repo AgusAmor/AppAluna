@@ -453,7 +453,7 @@ const createStyles = (colorScheme) =>
   StyleSheet.create({
     header: {
       marginTop: 20,
-      marginBottom: 16,
+      marginBottom: 2,
     },
     title: {
       ...fonts.heading.h1,

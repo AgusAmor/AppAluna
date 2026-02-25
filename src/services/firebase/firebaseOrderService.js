@@ -11,6 +11,9 @@ import { auth } from "./firebase";
  * Retrieves all orders (admin only)
  * GET /getAllOrders
  * Requires: Admin authentication and token
+ * @param {string} token - Firebase Auth token (must be from admin user)
+ * @returns {Promise<Array>} Array of order objects
+ * @throws {Error} If token is missing or request fails
  */
 export async function fetchAllOrders(token) {
   if (!token) {
@@ -18,7 +21,11 @@ export async function fetchAllOrders(token) {
   }
   try {
     const response = await apiGet("/getAllOrders", { token });
-    return response.orders || [];
+    // Handle both direct response and response.orders format
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.orders || response.data || [];
   } catch (error) {
     console.error("Error fetching all orders from Cloud Function:", error);
     throw new Error("Failed to fetch orders from Firebase");
@@ -27,18 +34,22 @@ export async function fetchAllOrders(token) {
 
 /**
  * Retrieves orders for a specific user
- * @param {string} userId - User ID
+ * GET /getUserOrders
+ * Returns current authenticated user's orders
  * @param {string} token - Firebase Auth token
  * @returns {Promise<Array>} Array of order objects for the user
- * @throws {Error} If retrieval fails
+ * @throws {Error} If token is missing or request fails
  */
-export async function fetchUserOrders(userId, token) {
+export async function fetchUserOrders(token) {
   if (!token) {
     throw new Error("Authentication token is required");
   }
   try {
     const response = await apiGet("/getUserOrders", { token });
-    return response.orders || [];
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return response.orders || response.data || [];
   } catch (error) {
     console.error("Error fetching user orders from Cloud Function:", error);
     throw new Error("Failed to fetch user orders");
@@ -47,10 +58,11 @@ export async function fetchUserOrders(userId, token) {
 
 /**
  * Retrieves a single order by ID
+ * GET /getOrder?orderId=ID
  * @param {string} orderId - Order document ID
  * @param {string} token - Firebase Auth token
- * @returns {Promise<Object>} Order data
- * @throws {Error} If retrieval fails
+ * @returns {Promise<Object>} Order data with id property
+ * @throws {Error} If orderId is invalid or request fails
  */
 export async function fetchOrderById(orderId, token) {
   if (!token) {
@@ -64,7 +76,11 @@ export async function fetchOrderById(orderId, token) {
       token,
       query: { orderId },
     });
-    return response;
+    // Ensure the response has an id property
+    if (response && !response.id && response.orderId) {
+      response.id = response.orderId;
+    }
+    return response || {};
   } catch (error) {
     console.error("Error fetching order by ID from Cloud Function:", error);
     throw new Error("Failed to fetch order");
@@ -142,6 +158,15 @@ export async function deleteOrder(orderId, token) {
  * @returns {Function} Unsubscribe function to stop polling
  * @throws {Error} If polling setup fails
  */
+/**
+ * Subscribes to real-time updates of all orders using polling
+ * Polls Cloud Functions every 3 seconds and calls callback when data changes
+ * Ensures token is available from current authenticated user
+ *
+ * @param {Function} callback - Called with orders array: (orders) => {}
+ * @returns {Function} Unsubscribe function to stop polling
+ * @throws {Error} If polling setup fails
+ */
 export function listenToOrders(callback) {
   let lastOrders = [];
   let intervalId = null;
@@ -149,16 +174,24 @@ export function listenToOrders(callback) {
 
   const pollOrders = async () => {
     try {
+      // Get fresh token from current user
       const token = await auth.currentUser?.getIdToken();
-      if (!token) return;
+      if (!token) {
+        console.warn("No authentication token available for polling orders");
+        return;
+      }
 
       const orders = await fetchAllOrders(token);
 
+      // Ensure orders is an array
+      const ordersList = Array.isArray(orders) ? orders : [];
+
       // Check if data actually changed to avoid unnecessary re-renders
-      const hasChanged = JSON.stringify(lastOrders) !== JSON.stringify(orders);
+      const hasChanged =
+        JSON.stringify(lastOrders) !== JSON.stringify(ordersList);
       if (hasChanged) {
-        lastOrders = orders;
-        callback(orders);
+        lastOrders = ordersList;
+        callback(ordersList);
       }
     } catch (error) {
       console.error("Error polling orders:", error);
