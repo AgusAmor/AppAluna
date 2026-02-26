@@ -44,6 +44,30 @@ const getStatusValue = (status) => {
 };
 
 /**
+ * Formats address from shipping address object
+ * Format: street number, region · city
+ */
+const getAddressText = (shippingAddress) => {
+  if (!shippingAddress) return "";
+
+  if (typeof shippingAddress === "string") {
+    return shippingAddress;
+  }
+
+  if (typeof shippingAddress === "object") {
+    const streetNumber = [shippingAddress.street, shippingAddress.number]
+      .filter(Boolean)
+      .join(" ");
+    const regionCity = [shippingAddress.region, shippingAddress.city]
+      .filter(Boolean)
+      .join(" · ");
+    return [streetNumber, regionCity].filter(Boolean).join(", ");
+  }
+
+  return "";
+};
+
+/**
  * useOrdersFilter
  * Filters orders by multiple criteria and sorts by status
  * @param {Array} orders - Orders to filter
@@ -62,7 +86,7 @@ export function useOrdersFilter(orders, products = []) {
 
     let result = orders;
 
-    // Search filter (name, email, order number)
+    // Search filter (name, email, order number, address)
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       result = result.filter((order) => {
@@ -74,8 +98,14 @@ export function useOrdersFilter(orders, products = []) {
           false;
         const matchesOrderNumber =
           order.orderNumber?.toLowerCase().includes(searchLower) || false;
+        const matchesAddress =
+          getAddressText(order.delivery?.shippingAddress)
+            .toLowerCase()
+            .includes(searchLower) || false;
 
-        return matchesName || matchesEmail || matchesOrderNumber;
+        return (
+          matchesName || matchesEmail || matchesOrderNumber || matchesAddress
+        );
       });
     }
 

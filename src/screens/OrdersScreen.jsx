@@ -109,27 +109,48 @@ const OrdersScreen = () => {
           {/* Delivery Info */}
           {item.delivery && (
             <View style={styles.deliverySection}>
-              {item.delivery.method && (
+              {item.delivery.method === "pickup" ? (
                 <>
                   <Text style={[styles.label, { marginTop: 8 }]}>
                     Tipo de Entrega
                   </Text>
-                  <Text style={styles.value}>
-                    {item.delivery.method === "pickup"
-                      ? "Retiro en Local"
-                      : item.delivery.method}
-                  </Text>
+                  <Text style={styles.value}>Retiro en Local</Text>
                 </>
-              )}
-              {item.delivery.cost !== undefined && (
-                <>
-                  <Text style={[styles.label, { marginTop: 8 }]}>
-                    Costo de Entrega
-                  </Text>
-                  <Text style={styles.value}>
-                    ${item.delivery.cost.toFixed(2)}
-                  </Text>
-                </>
+              ) : (
+                (() => {
+                  // For delivery methods other than pickup, show address
+                  const address = item.delivery?.shippingAddress;
+
+                  if (address) {
+                    let addressText = "";
+                    if (typeof address === "string") {
+                      addressText = address;
+                    } else if (typeof address === "object") {
+                      // Format: street number, region · city
+                      const streetNumber = [address.street, address.number]
+                        .filter(Boolean)
+                        .join(" ");
+                      const regionCity = [address.region, address.city]
+                        .filter(Boolean)
+                        .join(" · ");
+                      addressText = [streetNumber, regionCity]
+                        .filter(Boolean)
+                        .join(", ");
+                    }
+
+                    if (addressText) {
+                      return (
+                        <>
+                          <Text style={[styles.label, { marginTop: 8 }]}>
+                            Dirección de Entrega
+                          </Text>
+                          <Text style={styles.value}>{addressText}</Text>
+                        </>
+                      );
+                    }
+                  }
+                  return null;
+                })()
               )}
             </View>
           )}
@@ -185,7 +206,7 @@ const OrdersScreen = () => {
           {/* Search Input */}
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por nombre, email o nro. orden"
+            placeholder="Buscar por nombre, email, nro. orden o dirección"
             placeholderTextColor={colorScheme.textLight}
             value={searchTerm}
             onChangeText={setSearchTerm}
