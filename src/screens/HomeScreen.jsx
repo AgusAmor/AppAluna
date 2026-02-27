@@ -2,22 +2,17 @@ import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { Package, ShoppingBag, Users, DollarSign } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
+import { StatCard } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { useThemeColors, fonts } from "../theme";
 import { useDashboardStats } from "../hooks/screens";
+import { formatCurrency } from "../utils/formatters";
 
 const HomeScreen = () => {
   const { user } = useAuth();
   const { colorScheme } = useThemeColors();
   const { stats, loading, error } = useDashboardStats();
   const styles = createStyles(colorScheme);
-
-  const formatCurrency = (value) => {
-    return value.toLocaleString("es-AR", {
-      style: "currency",
-      currency: "ARS",
-    });
-  };
 
   return (
     <ScreenContainer backgroundColor={colorScheme.backgroundLight2}>
@@ -91,25 +86,6 @@ const HomeScreen = () => {
   );
 };
 
-const StatCard = ({ title, value, icon, colorScheme }) => {
-  const styles = createStyles(colorScheme);
-  return (
-    <View style={styles.statCard}>
-      <View style={styles.statIconContainer}>{icon}</View>
-      <View style={styles.statContent}>
-        <Text style={styles.statLabel}>{title}</Text>
-        {typeof value === "number" ? (
-          <Text style={styles.statValue}>{value}</Text>
-        ) : typeof value === "string" ? (
-          <Text style={styles.statValue}>{value}</Text>
-        ) : (
-          value
-        )}
-      </View>
-    </View>
-  );
-};
-
 const createStyles = (colorScheme) =>
   StyleSheet.create({
     header: {
@@ -154,38 +130,6 @@ const createStyles = (colorScheme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-    },
-    statIconContainer: {
-      width: 56,
-      height: 56,
-      borderRadius: 14,
-      backgroundColor: colorScheme.primary + "15",
-      justifyContent: "center",
-      alignItems: "center",
-      flexShrink: 0,
-    },
-    statContent: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      marginLeft: 12,
-    },
-    statLabel: {
-      ...fonts.heading.h4,
-      color: colorScheme.textLight,
-      fontWeight: "500",
-      marginBottom: 4,
-      textAlign: "center",
-    },
-    statValueContainer: {
-      minHeight: 32,
-      justifyContent: "center",
-    },
-    statValue: {
-      ...fonts.heading.h4,
-      color: colorScheme.primary,
-      textAlign: "center",
-      fontWeight: "700",
     },
   });
 

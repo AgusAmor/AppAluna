@@ -32,3 +32,4 @@ export {
   STATUS_SORTS,
   DELIVERY_METHOD_FILTERS,
 } from "./useOrdersFilter";
+export { useOrdersFilterOptions } from "./useOrdersFilterOptions";

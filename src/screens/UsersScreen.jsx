@@ -29,6 +29,7 @@ import {
   AddressEditModal,
 } from "../components/modals";
 import { useThemeColors, fonts } from "../theme";
+import { formatDate } from "../utils/formatters";
 
 /**
  * UsersScreen
@@ -127,19 +128,6 @@ const UsersScreen = () => {
     clearSelectedUser,
     closeDetailsModal,
   );
-
-  /**
-   * Format timestamp for display
-   */
-  const formatDate = useCallback((timestamp) => {
-    if (!timestamp) return "-";
-    try {
-      const date = timestamp.toDate?.() || new Date(timestamp);
-      return date.toLocaleDateString("es-AR");
-    } catch {
-      return "-";
-    }
-  }, []);
 
   /**
    * Wrapper for edit user - transitions to edit modal with origin tracking

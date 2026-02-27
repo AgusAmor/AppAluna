@@ -6,9 +6,9 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  Image,
 } from "react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
+import { ProductCard } from "../components/products";
 import {
   useProductsList,
   useProductEdit,
@@ -50,68 +50,17 @@ const ProductsScreen = () => {
   } = useProductEdit();
 
   /**
-   * Format price for display
-   */
-  const formatPrice = useCallback((price) => {
-    try {
-      if (!price) return "-";
-      return `$${parseFloat(price).toFixed(2)}`;
-    } catch {
-      return "-";
-    }
-  }, []);
-
-  /**
    * Render product item
    */
   const renderProductItem = useCallback(
     ({ item }) => (
-      <TouchableOpacity
-        style={styles.productCard}
+      <ProductCard
+        product={item}
         onPress={() => openEditModal(item)}
-      >
-        {item.imageUrl ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.productImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.productImage, styles.productImagePlaceholder]}>
-            <Text style={styles.placeholderText}>Sin imagen</Text>
-          </View>
-        )}
-
-        <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {item.name || "Sin nombre"}
-          </Text>
-          <Text style={styles.productDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-
-          <View style={styles.productMeta}>
-            <View>
-              <Text style={styles.productLabel}>Familia</Text>
-              <Text style={styles.productValue}>{item.family || "-"}</Text>
-            </View>
-            <View>
-              <Text style={styles.productLabel}>Normal</Text>
-              <Text style={styles.productPrice}>
-                {formatPrice(item.pricing?.normal?.price)}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.productLabel}>Small</Text>
-              <Text style={styles.productPrice}>
-                {formatPrice(item.pricing?.small?.price)}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
+        colorScheme={colorScheme}
+      />
     ),
-    [formatPrice, openEditModal],
+    [openEditModal, colorScheme],
   );
 
   const handleAddProduct = useCallback(() => {
@@ -343,60 +292,6 @@ const createStyles = (colorScheme) =>
     productsList: {
       gap: 12,
       paddingBottom: 65,
-    },
-    productCard: {
-      backgroundColor: colorScheme.backgroundLight2,
-      borderRadius: 8,
-      overflow: "hidden",
-      borderLeftWidth: 4,
-      borderLeftColor: colorScheme.primary,
-    },
-    productImage: {
-      width: "100%",
-      height: 150,
-      backgroundColor: colorScheme.backgroundLight,
-    },
-    productImagePlaceholder: {
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    placeholderText: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-    },
-    productInfo: {
-      padding: 12,
-    },
-    productName: {
-      ...fonts.heading.h4,
-      color: colorScheme.text,
-      marginBottom: 4,
-    },
-    productDescription: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-      marginBottom: 8,
-      height: 36,
-    },
-    productMeta: {
-      flexDirection: "row",
-      justifyContent: "space-around",
-      gap: 8,
-    },
-    productLabel: {
-      ...fonts.body.sm,
-      color: colorScheme.textLight,
-      marginBottom: 2,
-    },
-    productValue: {
-      ...fonts.body.base,
-      color: colorScheme.text,
-      fontWeight: "600",
-    },
-    productPrice: {
-      ...fonts.heading.h4,
-      color: colorScheme.accent,
-      fontWeight: "600",
     },
     filterContainer: {
       marginBottom: 2,
