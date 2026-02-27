@@ -30,4 +30,5 @@ export {
   useOrdersFilter,
   ORDER_STATUS_FILTERS,
   STATUS_SORTS,
+  DELIVERY_METHOD_FILTERS,
 } from "./useOrdersFilter";

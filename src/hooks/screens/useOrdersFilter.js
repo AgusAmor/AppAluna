@@ -26,6 +26,13 @@ export const STATUS_SORTS = {
   DESC: "desc",
 };
 
+// Delivery method filter options
+export const DELIVERY_METHOD_FILTERS = {
+  ALL: "all",
+  ENVIO: "envio",
+  RETIRO: "retiro",
+};
+
 /**
  * Get numeric value for order status to enable sorting
  * Orden: pending > confirmed > printing > dispatched > delivered/withdrawn > cancelled
@@ -79,6 +86,10 @@ export function useOrdersFilter(orders, products = []) {
   const [statusFilter, setStatusFilter] = useState(ORDER_STATUS_FILTERS.ALL);
   const [statusSort, setStatusSort] = useState(STATUS_SORTS.NONE);
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const [showFinalized, setShowFinalized] = useState(true);
+  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(
+    DELIVERY_METHOD_FILTERS.ALL,
+  );
 
   // Filter and sort orders
   const filteredOrders = useMemo(() => {
@@ -123,6 +134,31 @@ export function useOrdersFilter(orders, products = []) {
       );
     }
 
+    // Delivery method filter
+    if (selectedDeliveryMethod !== DELIVERY_METHOD_FILTERS.ALL) {
+      result = result.filter((order) => {
+        const method = order.delivery?.method;
+        if (selectedDeliveryMethod === DELIVERY_METHOD_FILTERS.ENVIO) {
+          return method !== "pickup";
+        } else if (selectedDeliveryMethod === DELIVERY_METHOD_FILTERS.RETIRO) {
+          return method === "pickup";
+        }
+        return true;
+      });
+    }
+
+    // Filter finalized orders (cancelled, delivered, withdrawn)
+    if (!showFinalized) {
+      result = result.filter(
+        (order) =>
+          ![
+            ORDER_STATUS_FILTERS.CANCELLED,
+            ORDER_STATUS_FILTERS.DELIVERED,
+            ORDER_STATUS_FILTERS.WITHDRAWN,
+          ].includes(order.status),
+      );
+    }
+
     // Sort by status
     if (statusSort !== STATUS_SORTS.NONE) {
       result = [...result].sort((a, b) => {
@@ -138,7 +174,15 @@ export function useOrdersFilter(orders, products = []) {
     }
 
     return result;
-  }, [orders, searchTerm, statusFilter, statusSort, selectedProductId]);
+  }, [
+    orders,
+    searchTerm,
+    statusFilter,
+    statusSort,
+    selectedProductId,
+    showFinalized,
+    selectedDeliveryMethod,
+  ]);
 
   return {
     filteredOrders,
@@ -150,5 +194,9 @@ export function useOrdersFilter(orders, products = []) {
     setStatusSort,
     selectedProductId,
     setSelectedProductId,
+    showFinalized,
+    setShowFinalized,
+    selectedDeliveryMethod,
+    setSelectedDeliveryMethod,
   };
 }

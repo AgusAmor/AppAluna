@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native";
+import { Eye, EyeOff } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { StatusBadge, Select } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
@@ -17,6 +18,7 @@ import {
   useOrdersFilter,
   ORDER_STATUS_FILTERS,
   STATUS_SORTS,
+  DELIVERY_METHOD_FILTERS,
 } from "../hooks/screens";
 import { useProductsList } from "../hooks/screens";
 import { formatDateTime } from "../services/orders";
@@ -37,13 +39,17 @@ const OrdersScreen = () => {
     setStatusSort,
     selectedProductId,
     setSelectedProductId,
+    showFinalized,
+    setShowFinalized,
+    selectedDeliveryMethod,
+    setSelectedDeliveryMethod,
   } = useOrdersFilter(allOrders);
   const styles = createStyles(colorScheme);
 
   // Status Filter Options
   const statusOptions = useMemo(() => {
     return [
-      { label: "Todos los estados", value: ORDER_STATUS_FILTERS.ALL },
+      { label: "Estado", value: ORDER_STATUS_FILTERS.ALL },
       { label: "Pendiente", value: ORDER_STATUS_FILTERS.PENDING },
       { label: "Confirmado", value: ORDER_STATUS_FILTERS.CONFIRMED },
       { label: "Imprimiendo", value: ORDER_STATUS_FILTERS.PRINTING },
@@ -69,7 +75,7 @@ const OrdersScreen = () => {
 
   // Product Filter Options
   const productOptions = useMemo(() => {
-    const baseOptions = [{ label: "Todos los productos", value: null }];
+    const baseOptions = [{ label: "Producto", value: null }];
     if (products && products.length > 0) {
       const productOpts = products.map((product) => ({
         label: product.name,
@@ -79,6 +85,15 @@ const OrdersScreen = () => {
     }
     return baseOptions;
   }, [products]);
+
+  // Delivery Method Filter Options
+  const deliveryMethodOptions = useMemo(() => {
+    return [
+      { label: "Entrega", value: DELIVERY_METHOD_FILTERS.ALL },
+      { label: "Envío", value: DELIVERY_METHOD_FILTERS.ENVIO },
+      { label: "Retiro", value: DELIVERY_METHOD_FILTERS.RETIRO },
+    ];
+  }, []);
 
   const renderOrderItem = ({ item }) => {
     return (
@@ -162,7 +177,9 @@ const OrdersScreen = () => {
             <Text style={styles.itemsLabel}>Items ({item.items.length})</Text>
             {item.items.map((itemDetail, index) => (
               <Text key={index} style={styles.itemText}>
-                • {itemDetail.productName} x{itemDetail.quantity}
+                • {itemDetail.productName}
+                {itemDetail.size && ` (${itemDetail.size})`} x
+                {itemDetail.quantity}
               </Text>
             ))}
           </View>
@@ -170,7 +187,7 @@ const OrdersScreen = () => {
 
         {/* Total */}
         <View style={styles.totalSection}>
-          <Text style={[styles.label, { marginTop: 12 }]}>Total</Text>
+          <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalValue}>
             ${(item.summary?.total || 0).toFixed(2)}
           </Text>
@@ -203,26 +220,53 @@ const OrdersScreen = () => {
           <Text style={styles.totalOrders}>
             Total: {filteredOrders.length} Pedidos
           </Text>
-          {/* Search Input */}
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por nombre, email, nro. orden o dirección"
-            placeholderTextColor={colorScheme.textLight}
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-          />
 
-          {/* Status and Product Filters Row */}
+          {/* Search Input and Finalized Orders Toggle Row */}
+          <View style={styles.searchRow}>
+            {/* Search Input */}
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar por texto"
+              placeholderTextColor={colorScheme.textLight}
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+            />
+
+            {/* Show Finalized Orders Toggle */}
+            <TouchableOpacity
+              style={styles.checkboxContainerInline}
+              onPress={() => setShowFinalized(!showFinalized)}
+            >
+              {showFinalized ? (
+                <Eye size={20} color={colorScheme.accent} strokeWidth={2} />
+              ) : (
+                <EyeOff size={20} color={colorScheme.border} strokeWidth={2} />
+              )}
+              <Text style={styles.checkboxLabel}>finalizados</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Filters Row: Status, Delivery Method and Product */}
           <View style={styles.selectsRow}>
             {/* Status Filter Select */}
-            <View style={styles.selectColumn}>
+            <View style={styles.selectColumnWide}>
               <Select
                 value={statusFilter}
                 onChange={setStatusFilter}
                 options={statusOptions}
-                placeholder="Selecciona un estado"
                 colorScheme={colorScheme}
                 valueColorMap={statusColorMap}
+              />
+            </View>
+
+            {/* Delivery Method Filter Select */}
+            <View style={styles.selectColumn}>
+              <Select
+                value={selectedDeliveryMethod}
+                onChange={setSelectedDeliveryMethod}
+                options={deliveryMethodOptions}
+                placeholder="Método de entrega"
+                colorScheme={colorScheme}
               />
             </View>
 
@@ -232,7 +276,6 @@ const OrdersScreen = () => {
                 value={selectedProductId}
                 onChange={setSelectedProductId}
                 options={productOptions}
-                placeholder="Selecciona un producto"
                 colorScheme={colorScheme}
               />
             </View>
@@ -297,6 +340,12 @@ const createStyles = (colorScheme) =>
       marginBottom: 12,
       gap: 2,
     },
+    searchRow: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+      marginBottom: 8,
+    },
     searchInput: {
       ...fonts.body.base,
       backgroundColor: colorScheme.backgroundLight2,
@@ -306,15 +355,35 @@ const createStyles = (colorScheme) =>
       paddingHorizontal: 12,
       paddingVertical: 10,
       color: colorScheme.text,
-      marginBottom: 8,
+      flex: 1,
     },
     selectsRow: {
       flexDirection: "row",
-      gap: 8,
+      gap: 6,
       marginBottom: 8,
     },
     selectColumn: {
       flex: 1,
+    },
+    selectColumnWide: {
+      flex: 1.2,
+    },
+    checkboxContainer: {
+      padding: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    checkboxContainerInline: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 2,
+      paddingVertical: 8,
+    },
+    checkboxLabel: {
+      ...fonts.body.sm,
+      color: colorScheme.text,
+      fontWeight: "500",
     },
     loadingContainer: {
       flex: 1,
@@ -333,7 +402,7 @@ const createStyles = (colorScheme) =>
     orderCard: {
       backgroundColor: colorScheme.backgroundLight2,
       borderRadius: 8,
-      padding: 12,
+      padding: 9,
       borderLeftWidth: 4,
       borderLeftColor: colorScheme.primary,
     },
@@ -341,19 +410,22 @@ const createStyles = (colorScheme) =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 12,
+      marginBottom: 8,
     },
     orderNumber: {
       ...fonts.heading.h4,
-      color: colorScheme.text,
+      color: colorScheme.primaryDark,
       flex: 1,
     },
     orderDetails: {
-      marginBottom: 12,
+      marginBottom: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.border,
+      paddingBottom: 8,
     },
     nameEmailRow: {
       flexDirection: "row",
-      gap: 12,
+      gap: 8,
       marginBottom: 0,
     },
     nameColumn: {
@@ -363,45 +435,61 @@ const createStyles = (colorScheme) =>
       flex: 1,
     },
     deliverySection: {
-      marginTop: 8,
+      marginTop: 4,
     },
     totalSection: {
+      marginTop: 6,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingTop: 8,
       borderTopWidth: 1,
       borderTopColor: colorScheme.border,
-      paddingTop: 12,
-      marginTop: 12,
+    },
+    totalLabel: {
+      ...fonts.body.base,
+      color: colorScheme.accent,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      fontWeight: "600",
+      fontSize: 11,
+    },
+    totalValue: {
+      ...fonts.heading.h2,
+      color: colorScheme.accent,
+      fontWeight: "700",
     },
     label: {
       ...fonts.body.xs,
       color: colorScheme.textLight,
       textTransform: "uppercase",
-      letterSpacing: 0.5,
-      marginBottom: 2,
+      letterSpacing: 0.4,
+      marginBottom: 1,
       fontWeight: "600",
+      fontSize: 11,
     },
     value: {
       ...fonts.body.sm,
       color: colorScheme.text,
-    },
-    totalValue: {
-      ...fonts.heading.h4,
-      color: colorScheme.primary,
+      lineHeight: 17,
     },
     itemsList: {
-      marginTop: 12,
+      marginTop: 8,
     },
     itemsLabel: {
       ...fonts.body.xs,
       color: colorScheme.textLight,
       textTransform: "uppercase",
-      letterSpacing: 0.5,
-      marginBottom: 6,
+      letterSpacing: 0.4,
+      marginBottom: 4,
       fontWeight: "600",
+      fontSize: 11,
     },
     itemText: {
       ...fonts.body.sm,
       color: colorScheme.text,
-      marginBottom: 4,
+      marginBottom: 2,
+      lineHeight: 17,
     },
     emptyContainer: {
       flex: 1,
