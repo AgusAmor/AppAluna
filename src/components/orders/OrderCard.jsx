@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { StatusBadge } from "../ui";
 import { formatDeliveryInfo } from "../../utils/addressFormatter";
 import { fonts } from "../../theme";
@@ -16,12 +16,16 @@ import { fonts } from "../../theme";
  * @param {object} colorScheme - Theme color scheme
  * @returns {JSX.Element}
  */
-const OrderCard = ({ order, colorScheme }) => {
+const OrderCard = ({ order, colorScheme, onPress }) => {
   const styles = createStyles(colorScheme);
   const deliveryInfo = formatDeliveryInfo(order.delivery);
 
   return (
-    <View style={styles.orderCard}>
+    <TouchableOpacity
+      style={styles.orderCard}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.75 : 1}
+    >
       {/* Header: Order Number and Status */}
       <View style={styles.orderHeader}>
         <Text style={styles.orderNumber}>{order.orderNumber || order.id}</Text>
@@ -81,7 +85,7 @@ const OrderCard = ({ order, colorScheme }) => {
           ${(order.summary?.total || 0).toFixed(2)}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

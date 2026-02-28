@@ -12,6 +12,7 @@ import { Eye, EyeOff } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { Select } from "../components/ui";
 import { OrderCard } from "../components/orders";
+import { OrderDetailsModal } from "../components/modals";
 import { useAuth } from "../context/AuthContext";
 import { useThemeColors, fonts } from "../theme";
 import { useOrdersList } from "../hooks/screens";
@@ -27,6 +28,18 @@ import { getStatusColor } from "../utils/statusColors";
 const OrdersScreen = () => {
   const { user } = useAuth();
   const { colorScheme } = useThemeColors();
+  const [selectedOrder, setSelectedOrder] = React.useState(null);
+  const [showDetailsModal, setShowDetailsModal] = React.useState(false);
+
+  const handleOpenDetails = React.useCallback((order) => {
+    setSelectedOrder(order);
+    setShowDetailsModal(true);
+  }, []);
+
+  const handleCloseDetails = React.useCallback(() => {
+    setShowDetailsModal(false);
+    setSelectedOrder(null);
+  }, []);
   const { filteredOrders: allOrders, loading, error } = useOrdersList();
   const { products } = useProductsList();
   const {
@@ -56,7 +69,13 @@ const OrdersScreen = () => {
   const styles = createStyles(colorScheme);
 
   const renderOrderItem = ({ item }) => {
-    return <OrderCard order={item} colorScheme={colorScheme} />;
+    return (
+      <OrderCard
+        order={item}
+        colorScheme={colorScheme}
+        onPress={() => handleOpenDetails(item)}
+      />
+    );
   };
 
   const renderEmptyState = () => (
@@ -67,106 +86,117 @@ const OrdersScreen = () => {
   );
 
   return (
-    <ScreenContainer>
-      <View style={styles.header}>
-        <Text style={styles.title}>Gestión de Pedidos</Text>
-      </View>
-
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+    <>
+      <OrderDetailsModal
+        visible={showDetailsModal}
+        onClose={handleCloseDetails}
+        order={selectedOrder}
+      />
+      <ScreenContainer>
+        <View style={styles.header}>
+          <Text style={styles.title}>Gestión de Pedidos</Text>
         </View>
-      )}
-      {/* Search and Filter Controls */}
-      {!loading && (
-        <View style={styles.filtersSection}>
-          <Text style={styles.totalOrders}>
-            Total: {filteredOrders.length} Pedidos
-          </Text>
 
-          {/* Search Input and Finalized Orders Toggle Row */}
-          <View style={styles.searchRow}>
-            {/* Search Input */}
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar por texto"
-              placeholderTextColor={colorScheme.textLight}
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-            />
-
-            {/* Show Finalized Orders Toggle */}
-            <TouchableOpacity
-              style={styles.checkboxContainerInline}
-              onPress={() => setShowFinalized(!showFinalized)}
-            >
-              {showFinalized ? (
-                <Eye size={20} color={colorScheme.accent} strokeWidth={2} />
-              ) : (
-                <EyeOff size={20} color={colorScheme.border} strokeWidth={2} />
-              )}
-              <Text style={styles.checkboxLabel}>finalizados</Text>
-            </TouchableOpacity>
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
+        )}
+        {/* Search and Filter Controls */}
+        {!loading && (
+          <View style={styles.filtersSection}>
+            <Text style={styles.totalOrders}>
+              Total: {filteredOrders.length} Pedidos
+            </Text>
 
-          {/* Filters Row: Status, Delivery Method and Product */}
-          <View style={styles.selectsRow}>
-            {/* Status Filter Select */}
-            <View style={styles.selectColumnWide}>
-              <Select
-                value={statusFilter}
-                onChange={setStatusFilter}
-                options={statusOptions}
-                colorScheme={colorScheme}
-                valueColorMap={statusColorMap}
+            {/* Search Input and Finalized Orders Toggle Row */}
+            <View style={styles.searchRow}>
+              {/* Search Input */}
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar por texto"
+                placeholderTextColor={colorScheme.textLight}
+                value={searchTerm}
+                onChangeText={setSearchTerm}
               />
+
+              {/* Show Finalized Orders Toggle */}
+              <TouchableOpacity
+                style={styles.checkboxContainerInline}
+                onPress={() => setShowFinalized(!showFinalized)}
+              >
+                {showFinalized ? (
+                  <Eye size={20} color={colorScheme.accent} strokeWidth={2} />
+                ) : (
+                  <EyeOff
+                    size={20}
+                    color={colorScheme.border}
+                    strokeWidth={2}
+                  />
+                )}
+                <Text style={styles.checkboxLabel}>finalizados</Text>
+              </TouchableOpacity>
             </View>
 
-            {/* Delivery Method Filter Select */}
-            <View style={styles.selectColumn}>
-              <Select
-                value={selectedDeliveryMethod}
-                onChange={setSelectedDeliveryMethod}
-                options={deliveryMethodOptions}
-                placeholder="Método de entrega"
-                colorScheme={colorScheme}
-              />
-            </View>
+            {/* Filters Row: Status, Delivery Method and Product */}
+            <View style={styles.selectsRow}>
+              {/* Status Filter Select */}
+              <View style={styles.selectColumnWide}>
+                <Select
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={statusOptions}
+                  colorScheme={colorScheme}
+                  valueColorMap={statusColorMap}
+                />
+              </View>
 
-            {/* Product Filter Select */}
-            <View style={styles.selectColumn}>
-              <Select
-                value={selectedProductId}
-                onChange={setSelectedProductId}
-                options={productOptions}
-                colorScheme={colorScheme}
-              />
+              {/* Delivery Method Filter Select */}
+              <View style={styles.selectColumn}>
+                <Select
+                  value={selectedDeliveryMethod}
+                  onChange={setSelectedDeliveryMethod}
+                  options={deliveryMethodOptions}
+                  placeholder="Método de entrega"
+                  colorScheme={colorScheme}
+                />
+              </View>
+
+              {/* Product Filter Select */}
+              <View style={styles.selectColumn}>
+                <Select
+                  value={selectedProductId}
+                  onChange={setSelectedProductId}
+                  options={productOptions}
+                  colorScheme={colorScheme}
+                />
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colorScheme.primary} />
-          <Text style={styles.loadingText}>Cargando pedidos...</Text>
-        </View>
-      )}
-      {!loading && (
-        <FlatList
-          data={filteredOrders}
-          renderItem={renderOrderItem}
-          keyExtractor={(item) => item.id}
-          ListEmptyComponent={renderEmptyState}
-          scrollEnabled={true}
-          contentContainerStyle={styles.listContent}
-          removeClippedSubviews={true}
-          initialNumToRender={10}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={50}
-        />
-      )}
-    </ScreenContainer>
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colorScheme.primary} />
+            <Text style={styles.loadingText}>Cargando pedidos...</Text>
+          </View>
+        )}
+        {!loading && (
+          <FlatList
+            data={filteredOrders}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.id}
+            ListEmptyComponent={renderEmptyState}
+            scrollEnabled={true}
+            contentContainerStyle={styles.listContent}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={50}
+          />
+        )}
+      </ScreenContainer>
+    </>
   );
 };
 
