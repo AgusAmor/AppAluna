@@ -332,10 +332,11 @@ const createStyles = (colorScheme) =>
     },
     label: {
       ...fonts.body.sm,
-      color: colorScheme.text,
+      color: colorScheme.primary,
       marginBottom: 8,
       fontWeight: "600",
-      letterSpacing: 0.3,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
     },
     input: {
       borderWidth: 1,

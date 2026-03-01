@@ -91,6 +91,7 @@ const OrdersScreen = () => {
         visible={showDetailsModal}
         onClose={handleCloseDetails}
         order={selectedOrder}
+        onOrderUpdated={(updatedOrder) => setSelectedOrder(updatedOrder)}
       />
       <ScreenContainer>
         <View style={styles.header}>

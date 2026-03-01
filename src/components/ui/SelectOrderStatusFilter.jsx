@@ -34,6 +34,7 @@ const Select = ({
   hasError = false,
   label,
   valueColorMap = {},
+  openUpward = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -79,21 +80,22 @@ const Select = ({
     },
     dropdown: {
       position: "absolute",
-      top: "100%",
+      ...(openUpward
+        ? { bottom: "100%", marginBottom: 2 }
+        : { top: "100%", marginTop: 0 }),
       left: 0,
       right: 0,
       borderWidth: 1,
       borderColor: colorScheme.border,
       borderRadius: 10,
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-      marginBottom: 0,
-      marginTop: 0,
+      ...(openUpward
+        ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }
+        : { borderTopLeftRadius: 0, borderTopRightRadius: 0 }),
       backgroundColor: colorScheme.backgroundLight,
       overflow: "hidden",
       zIndex: 1001,
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
+      shadowOffset: { width: 0, height: openUpward ? -4 : 4 },
       shadowOpacity: 0.1,
       shadowRadius: 8,
       elevation: 5,

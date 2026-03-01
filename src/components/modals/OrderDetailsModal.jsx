@@ -5,7 +5,7 @@
  * delivery, items, summary, and a collapsible status history.
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,9 +16,15 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, History, ChevronDown, ChevronUp } from "lucide-react-native";
+import {
+  X,
+  History,
+  ChevronDown,
+  ChevronUp,
+  StepForward,
+} from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
-import { StatusBadge } from "../ui";
+import { StatusBadge, Select } from "../ui";
 import {
   formatAddress,
   formatDeliveryInfo,
@@ -28,6 +34,9 @@ import {
   formatDateTime,
   formatCurrency,
 } from "../../utils/formatters";
+import { updateOrderStatus } from "../../services/firebase/firebaseOrderService";
+import { auth, firestore } from "../../services/firebase/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 /**
  * OrderDetailsModal
@@ -35,13 +44,114 @@ import {
  * @param {function} onClose - Close handler
  * @param {object} order - Order data object
  */
-const OrderDetailsModal = ({ visible, onClose, order }) => {
+const OrderDetailsModal = ({
+  visible,
+  onClose,
+  order: orderProp,
+  onOrderUpdated,
+}) => {
   const { colorScheme } = useThemeColors();
   const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
   const [showHistory, setShowHistory] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [localOrder, setLocalOrder] = useState(orderProp);
 
-  if (!order) return null;
+  // Reset local copy when a different order is opened
+  useEffect(() => {
+    setLocalOrder(orderProp);
+  }, [orderProp?.id]);
+
+  // Real-time listener — updates history and status as soon as Firebase changes
+  useEffect(() => {
+    if (!orderProp?.id) return;
+    const unsubscribe = onSnapshot(
+      doc(firestore, "orders", orderProp.id),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setLocalOrder({ id: snapshot.id, ...snapshot.data() });
+        }
+      },
+      (err) => console.error("Order listener error:", err),
+    );
+    return () => unsubscribe();
+  }, [order?.id]);
+
+  if (!localOrder) return null;
+  // Shadow the prop so all existing references below use live data
+  // eslint-disable-next-line no-shadow
+  const order = localOrder;
+
+  // ── Status flow constants ──
+  const STATUS_FLOW = ["pending", "confirmed", "printing", "dispatched"];
+  const STATUS_LABELS = {
+    pending: "Pendiente",
+    confirmed: "Confirmado",
+    printing: "Imprimiendo",
+    dispatched: "Despachado",
+    delivered: "Entregado",
+    withdrawn: "Retirado",
+    cancelled: "Cancelado",
+  };
+
+  const isPickup = order.delivery?.method === "pickup";
+  const finalDeliveryStatus = isPickup ? "withdrawn" : "delivered";
+  const isFinalStatus = [finalDeliveryStatus, "cancelled"].includes(
+    order.status,
+  );
+
+  // Returns the next status in the flow, or null if already at the end
+  const getNextStatus = () => {
+    if (isFinalStatus) return null;
+    const idx = STATUS_FLOW.indexOf(order.status);
+    if (idx === -1) return null;
+    if (idx === STATUS_FLOW.length - 1) return finalDeliveryStatus;
+    return STATUS_FLOW[idx + 1];
+  };
+
+  const nextStatus = getNextStatus();
+
+  // Status options filtered by delivery method (no opposite final status)
+  const getStatusOptions = () => {
+    const options = STATUS_FLOW.map((s) => ({
+      value: s,
+      label: STATUS_LABELS[s],
+    }));
+    options.push({
+      value: finalDeliveryStatus,
+      label: STATUS_LABELS[finalDeliveryStatus],
+    });
+    options.push({ value: "cancelled", label: STATUS_LABELS["cancelled"] });
+    return options;
+  };
+
+  // Calls the update API then notifies the parent with the partially-updated order
+  const handleStatusUpdate = async (newStatus) => {
+    if (!newStatus || isUpdating) return;
+    try {
+      setIsUpdating(true);
+      const token = await auth.currentUser.getIdToken();
+      await updateOrderStatus(
+        {
+          orderId: order.id,
+          newStatus,
+          note: `Estado actualizado a ${STATUS_LABELS[newStatus] || newStatus}`,
+          updatedBy: auth.currentUser.uid,
+        },
+        token,
+      );
+      onOrderUpdated?.({ ...order, status: newStatus });
+    } catch (err) {
+      console.error("Error updating order status:", err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Close handler
+  const handleCloseWithSave = () => {
+    onClose();
+  };
 
   const deliveryInfo = formatDeliveryInfo(order.delivery);
 
@@ -66,7 +176,7 @@ const OrderDetailsModal = ({ visible, onClose, order }) => {
       transparent={true}
       presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
       statusBarTranslucent={true}
-      onRequestClose={onClose}
+      onRequestClose={handleCloseWithSave}
     >
       <View
         style={[
@@ -83,12 +193,15 @@ const OrderDetailsModal = ({ visible, onClose, order }) => {
           {/* ── Header ── */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Text style={styles.orderNumber}>
+              <Text style={styles.orderNumber} numberOfLines={1}>
                 #{order.orderNumber || order.id}
               </Text>
               <StatusBadge status={order.status} size="medium" />
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity
+              onPress={handleCloseWithSave}
+              style={styles.closeBtn}
+            >
               <X size={22} color={colorScheme.textLight} />
             </TouchableOpacity>
           </View>
@@ -269,13 +382,69 @@ const OrderDetailsModal = ({ visible, onClose, order }) => {
                 )}
               </View>
             )}
+
+            {/* ── Status selector ── */}
+            <View style={styles.statusSection}>
+              <Text style={styles.statusSectionLabel}>Cambiar Estado</Text>
+              <Select
+                value={order.status}
+                onChange={handleStatusUpdate}
+                options={getStatusOptions()}
+                placeholder="Seleccionar estado..."
+                colorScheme={colorScheme}
+                disabled={isUpdating}
+                openUpward
+              />
+            </View>
           </ScrollView>
 
           {/* ── Footer ── */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>Cerrar</Text>
-            </TouchableOpacity>
+            {/* Top row: Cerrar + Cancelar */}
+            <View style={styles.footerTopRow}>
+              <TouchableOpacity
+                style={[styles.footerBtn, styles.closeButton]}
+                onPress={handleCloseWithSave}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.closeButtonText}>Cerrar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.footerBtn,
+                  styles.cancelButton,
+                  (["cancelled", "delivered", "withdrawn"].includes(
+                    order.status,
+                  ) ||
+                    isUpdating) &&
+                    styles.cancelButtonDisabled,
+                ]}
+                onPress={() => handleStatusUpdate("cancelled")}
+                disabled={
+                  ["cancelled", "delivered", "withdrawn"].includes(
+                    order.status,
+                  ) || isUpdating
+                }
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+            {/* Bottom row: Avanzar full-width */}
+            {nextStatus ? (
+              <TouchableOpacity
+                style={[
+                  styles.advanceButton,
+                  isUpdating && styles.advanceButtonDisabled,
+                ]}
+                onPress={() => handleStatusUpdate(nextStatus)}
+                disabled={isUpdating}
+                activeOpacity={0.8}
+              >
+                <StepForward size={18} color="#fff" />
+                <Text style={styles.advanceButtonText}>Avanzar</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
       </View>
@@ -306,22 +475,29 @@ const createStyles = (colorScheme) =>
     header: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
+      alignItems: "flex-start",
       marginBottom: 20,
       paddingBottom: 14,
       borderBottomWidth: 1,
       borderBottomColor: colorScheme.border + "30",
     },
     headerLeft: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: 4,
       flex: 1,
+      marginRight: 8,
+    },
+    headerTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
     },
     orderNumber: {
       ...fonts.heading.h3,
       color: colorScheme.text,
       fontWeight: "700",
+      flexShrink: 1,
     },
     closeBtn: {
       width: 40,
@@ -335,7 +511,7 @@ const createStyles = (colorScheme) =>
       flex: 1,
     },
     bodyContent: {
-      paddingBottom: 8,
+      paddingBottom: 32,
       gap: 4,
     },
 
@@ -509,25 +685,74 @@ const createStyles = (colorScheme) =>
       marginTop: 4,
     },
 
+    // ── status management ──
+    statusSectionLabel: {
+      ...fonts.body.sm,
+      color: colorScheme.primary,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      fontWeight: "600",
+      marginBottom: 8,
+    },
+
     // ── footer ──
     footer: {
-      paddingTop: 14,
+      paddingTop: 12,
       borderTopWidth: 1,
       borderTopColor: colorScheme.border + "30",
       paddingBottom: 6,
+      gap: 8,
     },
-    closeButton: {
+    footerTopRow: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    footerBtn: {
+      flex: 1,
       paddingVertical: 14,
       borderRadius: 10,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    closeButton: {
       borderWidth: 1,
       borderColor: colorScheme.border,
-      alignItems: "center",
       backgroundColor: colorScheme.backgroundLight,
     },
     closeButtonText: {
       ...fonts.button,
       color: colorScheme.text,
       fontWeight: "600",
+    },
+    cancelButton: {
+      borderWidth: 1,
+      borderColor: colorScheme.error + "80",
+      backgroundColor: colorScheme.error + "15",
+    },
+    cancelButtonDisabled: {
+      opacity: 0.4,
+    },
+    cancelButtonText: {
+      ...fonts.button,
+      color: colorScheme.error,
+      fontWeight: "600",
+    },
+    advanceButton: {
+      backgroundColor: "#16a34a",
+      flexDirection: "row",
+      gap: 6,
+      paddingVertical: 14,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    advanceButtonDisabled: {
+      opacity: 0.6,
+    },
+    advanceButtonText: {
+      ...fonts.button,
+      color: "#fff",
+      fontWeight: "700",
     },
   });
 

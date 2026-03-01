@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
+import { DollarSign, ArrowUp, ArrowDown } from "lucide-react-native";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import { ProductCard } from "../components/products";
 import {
@@ -111,15 +112,22 @@ const ProductsScreen = () => {
               )
             }
           >
-            <Text
-              style={[
-                styles.priceFilterButtonText,
-                priceSort === PRICE_SORTS.ASC &&
-                  styles.priceFilterButtonTextActive,
-              ]}
-            >
-              Menor a Mayor
-            </Text>
+            <DollarSign
+              size={14}
+              color={
+                priceSort === PRICE_SORTS.ASC
+                  ? colorScheme.background
+                  : colorScheme.textLight
+              }
+            />
+            <ArrowUp
+              size={14}
+              color={
+                priceSort === PRICE_SORTS.ASC
+                  ? colorScheme.background
+                  : colorScheme.textLight
+              }
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -135,15 +143,22 @@ const ProductsScreen = () => {
               )
             }
           >
-            <Text
-              style={[
-                styles.priceFilterButtonText,
-                priceSort === PRICE_SORTS.DESC &&
-                  styles.priceFilterButtonTextActive,
-              ]}
-            >
-              Mayor a Menor
-            </Text>
+            <DollarSign
+              size={14}
+              color={
+                priceSort === PRICE_SORTS.DESC
+                  ? colorScheme.background
+                  : colorScheme.textLight
+              }
+            />
+            <ArrowDown
+              size={14}
+              color={
+                priceSort === PRICE_SORTS.DESC
+                  ? colorScheme.background
+                  : colorScheme.textLight
+              }
+            />
           </TouchableOpacity>
         </View>
 
@@ -346,8 +361,10 @@ const createStyles = (colorScheme) =>
       backgroundColor: colorScheme.backgroundLight2,
       borderWidth: 1,
       borderColor: colorScheme.border,
+      flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
+      gap: 4,
     },
     priceFilterButtonActive: {
       backgroundColor: colorScheme.accent,

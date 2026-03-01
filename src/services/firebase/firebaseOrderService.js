@@ -5,7 +5,7 @@
  */
 
 import { apiGet, apiPostAuth } from "./apiClient";
-import { auth } from "./firebase";
+import { createListener } from "./firebaseListenerUtil";
 
 /**
  * Retrieves all orders (admin only)
@@ -151,71 +151,19 @@ export async function deleteOrder(orderId, token) {
 }
 
 /**
- * Subscribes to real-time updates of all orders using polling
- * Since orders have strict Firestore rules, we fetch from Cloud Functions periodically
- *
- * @param {Function} callback - Called with orders array whenever data changes: (orders) => {}
- * @returns {Function} Unsubscribe function to stop polling
- * @throws {Error} If polling setup fails
- */
-/**
- * Subscribes to real-time updates of all orders using polling
- * Polls Cloud Functions every 3 seconds and calls callback when data changes
- * Ensures token is available from current authenticated user
+ * Subscribes to real-time updates of all orders using a Firestore onSnapshot listener.
+ * Requires admin token in Firestore rules (request.auth.token.admin == true).
  *
  * @param {Function} callback - Called with orders array: (orders) => {}
- * @returns {Function} Unsubscribe function to stop polling
- * @throws {Error} If polling setup fails
+ * @returns {Function} Unsubscribe function to stop listening
  */
 export function listenToOrders(callback) {
-  let lastOrders = [];
-  let intervalId = null;
-  let isPolling = true;
-
-  const pollOrders = async () => {
-    try {
-      // Get fresh token from current user
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        console.warn("No authentication token available for polling orders");
-        return;
-      }
-
-      const orders = await fetchAllOrders(token);
-
-      // Ensure orders is an array
-      const ordersList = Array.isArray(orders) ? orders : [];
-
-      // Check if data actually changed to avoid unnecessary re-renders
-      const hasChanged =
-        JSON.stringify(lastOrders) !== JSON.stringify(ordersList);
-      if (hasChanged) {
-        lastOrders = ordersList;
-        callback(ordersList);
-      }
-    } catch (error) {
-      console.error("Error polling orders:", error);
-      // Continue polling even on error
-    }
-  };
-
-  // Initial fetch
-  pollOrders();
-
-  // Set up polling interval (3 seconds)
-  intervalId = setInterval(() => {
-    if (isPolling) {
-      pollOrders();
-    }
-  }, 3000);
-
-  // Return unsubscribe function
-  return () => {
-    isPolling = false;
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
-  };
+  try {
+    return createListener("orders", callback);
+  } catch (error) {
+    console.error("Error setting up orders listener:", error);
+    throw error;
+  }
 }
 
 export default {

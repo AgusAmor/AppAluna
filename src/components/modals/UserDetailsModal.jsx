@@ -38,6 +38,7 @@ const UserDetailsModal = ({
       transparent={true}
       presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
       statusBarTranslucent={true}
+      onRequestClose={onClose}
     >
       <View
         style={[
@@ -189,7 +190,7 @@ const createStyles = (colorScheme) =>
       borderTopRightRadius: 20,
       padding: 24,
       paddingBottom: 0,
-      height: "80%",
+      height: "85%",
       shadowColor: colorScheme.primary,
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.15,

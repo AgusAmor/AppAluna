@@ -452,7 +452,7 @@ const createStyles = (colorScheme) =>
       borderTopRightRadius: 20,
       padding: 24,
       paddingBottom: 0,
-      height: "80%",
+      height: "85%",
       shadowColor: colorScheme.primary,
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.15,
@@ -485,10 +485,11 @@ const createStyles = (colorScheme) =>
     },
     label: {
       ...fonts.body.sm,
-      color: colorScheme.text,
+      color: colorScheme.primary,
       marginBottom: 8,
       fontWeight: "600",
-      letterSpacing: 0.3,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
     },
     inputWrapper: {
       position: "relative",

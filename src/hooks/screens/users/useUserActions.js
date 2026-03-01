@@ -43,6 +43,7 @@ export function useUserActions() {
       const currentStatus = userItem.accountStatus || "active";
       const newStatus = currentStatus === "active" ? "suspended" : "active";
       const statusText = newStatus === "active" ? "activar" : "suspender";
+      const statusPastParticiple = newStatus === "active" ? "activada" : "suspendida";
 
       Alert.alert(
         "Cambiar estado de cuenta",
@@ -56,7 +57,7 @@ export function useUserActions() {
                 setActioningUserId(userItem.id);
                 const token = await getToken();
                 await changeUserAccountStatus(userItem.id, newStatus, token);
-                Alert.alert("Éxito", `Cuenta ${statusText}ada correctamente`);
+                Alert.alert("Éxito", `Cuenta ${statusPastParticiple} correctamente`);
               } catch (err) {
                 console.error("Error changing status:", err);
                 const friendlyError = mapErrorMessage(err.message);

@@ -704,6 +704,7 @@ const createStyles = (colorScheme) =>
       padding: 24,
       paddingBottom: 0,
       flex: 1,
+      height: "85%",
       shadowColor: colorScheme.primary,
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.15,
@@ -747,7 +748,8 @@ const createStyles = (colorScheme) =>
       color: colorScheme.primary,
       marginBottom: 8,
       fontWeight: "600",
-      letterSpacing: 0.3,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
     },
     input: {
       borderWidth: 1,
@@ -775,11 +777,11 @@ const createStyles = (colorScheme) =>
       height: 100,
     },
     pricingSection: {
-      marginVertical: 8,
+      marginVertical: 16,
     },
     sectionTitle: {
-      ...fonts.heading.h3,
-      color: colorScheme.primaryDark,
+      ...fonts.heading.h4,
+      color: colorScheme.textLight,
       marginBottom: 12,
     },
     priceInputContainer: {
