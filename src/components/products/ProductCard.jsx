@@ -95,7 +95,6 @@ const createStyles = (colorScheme) =>
     productName: {
       ...fonts.heading.h3,
       color: colorScheme.text,
-      fontWeight: "600",
     },
     productDescription: {
       ...fonts.body.sm,
@@ -111,19 +110,16 @@ const createStyles = (colorScheme) =>
     productLabel: {
       ...fonts.body.xs,
       color: colorScheme.textLight,
-      fontWeight: "500",
-      fontSize: 10,
       marginBottom: 2,
     },
     productValue: {
       ...fonts.body.sm,
       color: colorScheme.text,
-      fontWeight: "500",
     },
     productPrice: {
-      ...fonts.heading.h3,
+      fontFamily: "Comfortaa-Bold",
+      fontSize: 20,
       color: colorScheme.accent,
-      fontWeight: "700",
     },
   });
 

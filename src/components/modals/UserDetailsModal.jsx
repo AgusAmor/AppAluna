@@ -193,7 +193,10 @@ const UserDetailsModal = ({
               <Text style={styles.cancelButtonText}>Cerrar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.editButton} onPress={() => onEdit(user)}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => onEdit(user)}
+            >
               <Text style={styles.editButtonText}>Editar</Text>
             </TouchableOpacity>
           </View>

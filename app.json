@@ -21,9 +21,6 @@
         "backgroundColor": "#f4f4f4"
       },
       "package": "com.aluna.appaluna"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
     }
   }
 }

@@ -4,6 +4,9 @@
  * Define font families, weights, and predefined text styles.
  */
 
+// NOTE: On Android, React Native cannot synthesize font weights for custom fonts.
+// Each weight variant must be loaded under a unique key and referenced by that
+// exact name in fontFamily. Do NOT use fontWeight alongside these custom families.
 export const fonts = {
   family: {
     comfortaa: "Comfortaa",
@@ -24,48 +27,44 @@ export const fonts = {
 
   heading: {
     h1: {
-      fontFamily: "Comfortaa",
+      fontFamily: "Comfortaa-Bold",
       fontSize: 32,
-      fontWeight: "700",
     },
     h2: {
-      fontFamily: "Comfortaa",
+      fontFamily: "Comfortaa-Bold",
       fontSize: 28,
-      fontWeight: "700",
     },
     h3: {
-      fontFamily: "Comfortaa",
+      fontFamily: "Comfortaa-SemiBold",
       fontSize: 24,
-      fontWeight: "600",
     },
     h4: {
-      fontFamily: "Comfortaa",
+      fontFamily: "Comfortaa-SemiBold",
       fontSize: 20,
-      fontWeight: "600",
     },
   },
 
   body: {
     lg: {
-      fontFamily: "Sora",
+      fontFamily: "Sora-Regular",
       fontSize: 16,
-      fontWeight: "400",
     },
     base: {
-      fontFamily: "Sora",
+      fontFamily: "Sora-Regular",
       fontSize: 14,
-      fontWeight: "400",
     },
     sm: {
-      fontFamily: "Sora",
+      fontFamily: "Sora-Regular",
       fontSize: 12,
-      fontWeight: "400",
+    },
+    xs: {
+      fontFamily: "Sora-Regular",
+      fontSize: 10,
     },
   },
 
   button: {
-    fontFamily: "Sora",
+    fontFamily: "Sora-Bold",
     fontSize: 16,
-    fontWeight: "900",
   },
 };

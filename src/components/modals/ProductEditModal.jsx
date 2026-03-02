@@ -163,10 +163,12 @@ const ProductEditModal = ({
   const [imageLoading, setImageLoading] = useState(false);
   const [localProduct, setLocalProduct] = useState(productProp);
 
-  // Reset when a different product is opened
+  // Reset when modal opens or when a different product is opened
   useEffect(() => {
-    setLocalProduct(productProp);
-  }, [productProp?.id]);
+    if (visible) {
+      setLocalProduct(productProp);
+    }
+  }, [productProp?.id, visible]);
 
   // Real-time listener — keeps product data up to date from Firebase
   useEffect(() => {
