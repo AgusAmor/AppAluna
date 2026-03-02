@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
+import { firestore } from "../../services/firebase/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 /**
  * UserDetailsModal
@@ -19,7 +21,7 @@ import { useThemeColors, fonts } from "../../theme";
 const UserDetailsModal = ({
   visible,
   onClose,
-  user,
+  user: userProp,
   onEdit,
   formatDate,
   formatUserStatus,
@@ -28,8 +30,32 @@ const UserDetailsModal = ({
   const { colorScheme } = useThemeColors();
   const insets = useSafeAreaInsets();
   const styles = createStyles(colorScheme);
+  const [localUser, setLocalUser] = useState(userProp);
 
-  if (!user) return null;
+  // Reset when a different user is opened
+  useEffect(() => {
+    setLocalUser(userProp);
+  }, [userProp?.id]);
+
+  // Real-time listener — keeps user data up to date from Firebase
+  useEffect(() => {
+    if (!userProp?.id) return;
+    const unsubscribe = onSnapshot(
+      doc(firestore, "users", userProp.id),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setLocalUser({ id: snapshot.id, ...snapshot.data() });
+        }
+      },
+      (err) => console.error("User listener error:", err),
+    );
+    return () => unsubscribe();
+  }, [userProp?.id]);
+
+  if (!localUser) return null;
+  // Shadow the prop so all existing references below use live data
+  // eslint-disable-next-line no-shadow
+  const user = localUser;
 
   return (
     <Modal
@@ -167,7 +193,7 @@ const UserDetailsModal = ({
               <Text style={styles.cancelButtonText}>Cerrar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.editButton} onPress={onEdit}>
+            <TouchableOpacity style={styles.editButton} onPress={() => onEdit(user)}>
               <Text style={styles.editButtonText}>Editar</Text>
             </TouchableOpacity>
           </View>

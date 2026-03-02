@@ -15,6 +15,7 @@ import {
   isValidContactPhone,
   validatePhoneMinDigits,
 } from "../../../utils/validationService";
+import { ensureDefaultAddress } from "../../../utils/addressUtils";
 
 /**
  * Validates form data before saving
@@ -86,11 +87,12 @@ export function useUserEdit() {
   const [isSaving, setIsSaving] = useState(false);
 
   const openEditModal = useCallback((user) => {
+    const rawAddresses = user.addresses ? [...user.addresses] : [];
     setEditForm({
       displayName: user.displayName || "",
       email: user.email || "",
       phone: user.phone || "",
-      addresses: user.addresses ? [...user.addresses] : [],
+      addresses: ensureDefaultAddress(rawAddresses),
     });
     setShowEditModal(true);
   }, []);

@@ -23,6 +23,8 @@ import {
 } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
 import { validateRequired } from "../../utils/validationService";
+import { firestore } from "../../services/firebase/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 /**
  * FamilySelect Component
@@ -141,7 +143,7 @@ const FamilySelect = ({ value, onChange, disabled, colorScheme, hasError }) => {
 const ProductEditModal = ({
   visible,
   onClose,
-  product,
+  product: productProp,
   editForm,
   onFormChange,
   onSave,
@@ -159,6 +161,31 @@ const ProductEditModal = ({
   const styles = createStyles(colorScheme);
   const [fieldErrors, setFieldErrors] = useState({});
   const [imageLoading, setImageLoading] = useState(false);
+  const [localProduct, setLocalProduct] = useState(productProp);
+
+  // Reset when a different product is opened
+  useEffect(() => {
+    setLocalProduct(productProp);
+  }, [productProp?.id]);
+
+  // Real-time listener — keeps product data up to date from Firebase
+  useEffect(() => {
+    if (!productProp?.id) return;
+    const unsubscribe = onSnapshot(
+      doc(firestore, "products", productProp.id),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setLocalProduct({ id: snapshot.id, ...snapshot.data() });
+        }
+      },
+      (err) => console.error("Product listener error:", err),
+    );
+    return () => unsubscribe();
+  }, [productProp?.id]);
+
+  // Shadow the prop so all existing references below use live data
+  // eslint-disable-next-line no-shadow
+  const product = localProduct;
 
   // Effect: Validate all fields when modal opens or form changes
   useEffect(() => {

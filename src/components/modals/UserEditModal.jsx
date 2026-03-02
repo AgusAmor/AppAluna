@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,8 @@ import {
   validatePhoneMinDigits,
 } from "../../utils/validationService";
 import { filterPhone } from "../../utils/inputFilters";
+import { firestore } from "../../services/firebase/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 /**
  * UserEditModal
@@ -31,7 +33,7 @@ import { filterPhone } from "../../utils/inputFilters";
 const UserEditModal = ({
   visible,
   onClose,
-  user,
+  user: userProp,
   editForm,
   onFormChange,
   onSave,
@@ -98,7 +100,32 @@ const UserEditModal = ({
     return Object.values(fieldErrors).some((error) => error !== null);
   }, [fieldErrors]);
 
-  if (!user) return null;
+  const [localUser, setLocalUser] = useState(userProp);
+
+  // Reset when a different user is opened
+  useEffect(() => {
+    setLocalUser(userProp);
+  }, [userProp?.id]);
+
+  // Real-time listener — keeps user data up to date from Firebase
+  useEffect(() => {
+    if (!userProp?.id) return;
+    const unsubscribe = onSnapshot(
+      doc(firestore, "users", userProp.id),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setLocalUser({ id: snapshot.id, ...snapshot.data() });
+        }
+      },
+      (err) => console.error("User listener error:", err),
+    );
+    return () => unsubscribe();
+  }, [userProp?.id]);
+
+  if (!localUser) return null;
+  // Shadow the prop so all existing references below use live data
+  // eslint-disable-next-line no-shadow
+  const user = localUser;
 
   return (
     <Modal
@@ -212,8 +239,8 @@ const UserEditModal = ({
                       style={[
                         styles.addressCard,
                         address.isDefault
-                          ? { borderLeftColor: colorScheme.accent }
-                          : { borderLeftColor: colorScheme.primary },
+                          ? styles.addressCardDefault
+                          : styles.addressCardNormal,
                       ]}
                       onPress={() => onEditAddress(idx)}
                     >
@@ -409,9 +436,18 @@ const createStyles = (colorScheme) =>
       justifyContent: "space-between",
       alignItems: "center",
       borderLeftWidth: 4,
+      borderTopWidth: 1,
+      borderTopColor: colorScheme.border + "40",
+      borderRightWidth: 1,
+      borderRightColor: colorScheme.border + "40",
+      borderBottomWidth: 1,
+      borderBottomColor: colorScheme.border + "40",
+    },
+    addressCardDefault: {
+      borderLeftColor: colorScheme.accent,
+    },
+    addressCardNormal: {
       borderLeftColor: colorScheme.primary,
-      borderWidth: 1,
-      borderColor: colorScheme.border + "40",
     },
     addressCardContent: {
       flex: 1,

@@ -398,10 +398,8 @@ const UsersScreen = () => {
         visible={showDetailsModal}
         onClose={() => handleDetailsModalClose(shouldReopenDetailsOnEditClose)}
         user={selectedUser}
-        onEdit={() => {
-          if (selectedUser) {
-            handleTransitionToEditModal(selectedUser);
-          }
+        onEdit={(liveUser) => {
+          handleTransitionToEditModal(liveUser || selectedUser);
         }}
         formatDate={formatDate}
         formatUserStatus={formatUserStatus}

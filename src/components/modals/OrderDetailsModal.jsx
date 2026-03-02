@@ -75,7 +75,7 @@ const OrderDetailsModal = ({
       (err) => console.error("Order listener error:", err),
     );
     return () => unsubscribe();
-  }, [order?.id]);
+  }, [orderProp?.id]);
 
   if (!localOrder) return null;
   // Shadow the prop so all existing references below use live data
