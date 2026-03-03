@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, Alert } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -14,6 +14,13 @@ const AppNavigator = () => {
   const { user, loading, isAdmin, logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState("Home");
 
+  // Reset to Home whenever a new session starts
+  useEffect(() => {
+    if (user) {
+      setCurrentScreen("Home");
+    }
+  }, [user]);
+
   if (loading) {
     return <LoadingScreen />;
   }
@@ -26,12 +33,21 @@ const AppNavigator = () => {
     return <UnauthorizedScreen />;
   }
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+  const handleLogout = () => {
+    Alert.alert("Cerrar sesión", "¿Estás seguro que querés cerrar sesión?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Cerrar sesión",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error("Logout error:", error);
+          }
+        },
+      },
+    ]);
   };
 
   const handleNavigate = (screenName) => {

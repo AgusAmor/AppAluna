@@ -4,9 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web"
+    "android": "eas build --platform android --profile preview",
+    "ios": "eas update --branch main"
   },
   "dependencies": {
     "@expo-google-fonts/comfortaa": "^0.4.2",

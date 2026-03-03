@@ -99,6 +99,18 @@ export function useDashboardStats() {
     };
   }, []);
 
+  // Converts a Firestore Timestamp, JS Date, or ISO string to a JS Date
+  const toDate = (value) => {
+    if (!value) return null;
+    // Firestore Timestamp (has .toDate() method)
+    if (typeof value.toDate === "function") return value.toDate();
+    // Already a Date
+    if (value instanceof Date) return value;
+    // String or number
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   const calculateStats = (productsList, ordersList, usersList) => {
     try {
       // Calculate today's date
@@ -111,30 +123,29 @@ export function useDashboardStats() {
       // Orders today
       const ordersToday =
         ordersList?.filter((order) => {
-          const orderDate = new Date(order.createdAt || order.created_at);
-          orderDate.setHours(0, 0, 0, 0);
-          return orderDate.getTime() === today.getTime();
+          const orderDate = toDate(order.createdAt || order.created_at);
+          if (!orderDate) return false;
+          const d = new Date(orderDate);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === today.getTime();
         }).length || 0;
 
       // Registered users
       const registeredUsers = usersList?.length || 0;
 
       // Monthly revenue - sum items from all orders in current month
-      const currentMonth = new Date();
-      const firstDayOfMonth = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        1,
-      );
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       let monthlyRevenue = 0;
 
       if (ordersList && Array.isArray(ordersList)) {
         ordersList.forEach((order) => {
-          const orderDate = new Date(order.createdAt || order.created_at);
+          const orderDate = toDate(order.createdAt || order.created_at);
+          if (!orderDate) return;
 
           // Check if order is within current month (from first day to today)
-          if (orderDate >= firstDayOfMonth && orderDate <= new Date()) {
+          if (orderDate >= firstDayOfMonth && orderDate <= now) {
             // Sum total from all items in the order
             if (order.items && Array.isArray(order.items)) {
               order.items.forEach((item) => {
