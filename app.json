@@ -21,6 +21,17 @@
         "backgroundColor": "#f4f4f4"
       },
       "package": "com.aluna.appaluna"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "14d779f0-b784-4099-a6af-21c3fe309f2a"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/14d779f0-b784-4099-a6af-21c3fe309f2a"
     }
   }
 }
