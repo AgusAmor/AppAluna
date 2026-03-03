@@ -19,7 +19,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X } from "lucide-react-native";
+import { X, CheckCircle, AlertTriangle } from "lucide-react-native";
 import { useThemeColors, fonts } from "../../theme";
 import {
   validateRequired,
@@ -31,6 +31,7 @@ import {
   getFilterForField,
   getMaxLengthForField,
 } from "../../utils/inputFilters";
+import { validateAddressObject } from "../../services/mapbox/mapboxService";
 
 /**
  * AddressEditModal
@@ -51,6 +52,11 @@ const AddressEditModal = ({
   const [fieldErrors, setFieldErrors] = useState({});
   const [validatingFields, setValidatingFields] = useState({});
   const validationTimeoutRef = useRef({});
+
+  // Mapbox address validation state (mirrors WebAluna's useAddressValidation)
+  const [mapboxValidating, setMapboxValidating] = useState(false);
+  const [mapboxStatus, setMapboxStatus] = useState(null); // null | { status, message }
+  const mapboxTimeoutRef = useRef(null);
 
   // Validate individual fields with debounce (1000ms like WebAluna)
   const validateField = useCallback((fieldName, value) => {
@@ -152,10 +158,34 @@ const AddressEditModal = ({
     return Object.values(fieldErrors).some((error) => error !== null);
   }, [fieldErrors]);
 
+  // Auto-validate address with Mapbox when all 5 fields are filled (mirrors WebAluna's 1500ms debounce)
+  useEffect(() => {
+    if (mapboxTimeoutRef.current) clearTimeout(mapboxTimeoutRef.current);
+
+    const { street, number, city, region, postalCode } = address || {};
+    const allFilled =
+      street?.trim() && number && city?.trim() && region?.trim() && postalCode?.trim();
+
+    if (!allFilled) {
+      setMapboxStatus(null);
+      return;
+    }
+
+    setMapboxValidating(true);
+    setMapboxStatus(null);
+
+    mapboxTimeoutRef.current = setTimeout(async () => {
+      const result = await validateAddressObject({ street, number, city, region, postalCode });
+      setMapboxStatus(result);
+      setMapboxValidating(false);
+    }, 1500);
+  }, [address?.street, address?.number, address?.city, address?.region, address?.postalCode]);
+
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       Object.values(validationTimeoutRef.current).forEach(clearTimeout);
+      if (mapboxTimeoutRef.current) clearTimeout(mapboxTimeoutRef.current);
     };
   }, []);
 
@@ -418,6 +448,58 @@ const AddressEditModal = ({
             </ScrollView>
           </TouchableWithoutFeedback>
 
+          {/* Mapbox address existence validation banner — above footer buttons */}
+          {(mapboxValidating || mapboxStatus) && (
+            <View
+              style={[
+                styles.mapboxBanner,
+                mapboxValidating && styles.mapboxBannerValidating,
+                mapboxStatus?.status === "success" && styles.mapboxBannerSuccess,
+                mapboxStatus?.status === "error" && styles.mapboxBannerError,
+              ]}
+            >
+              {mapboxValidating ? (
+                <>
+                  <ActivityIndicator
+                    size="small"
+                    color={colorScheme.primary}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={[styles.mapboxBannerText, { color: colorScheme.primary }]}>
+                    Validando dirección...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  {mapboxStatus?.status === "success" ? (
+                    <CheckCircle
+                      size={16}
+                      color={colorScheme.success}
+                      style={{ marginRight: 8, flexShrink: 0 }}
+                    />
+                  ) : (
+                    <AlertTriangle
+                      size={16}
+                      color={colorScheme.warning}
+                      style={{ marginRight: 8, flexShrink: 0 }}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.mapboxBannerText,
+                      mapboxStatus?.status === "success"
+                        ? styles.mapboxBannerTextSuccess
+                        : styles.mapboxBannerTextError,
+                    ]}
+                    numberOfLines={3}
+                  >
+                    {mapboxStatus?.message}
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
+
           <View style={styles.modalActions}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelButtonText}>Cancelar</Text>
@@ -482,6 +564,37 @@ const createStyles = (colorScheme) =>
     formContainer: {
       marginBottom: 20,
       flex: 1,
+    },
+    mapboxBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 8,
+      marginBottom: 8,
+      borderWidth: 1,
+    },
+    mapboxBannerValidating: {
+      backgroundColor: colorScheme.primary + "10",
+      borderColor: colorScheme.primary + "40",
+    },
+    mapboxBannerSuccess: {
+      backgroundColor: colorScheme.success + "12",
+      borderColor: colorScheme.success + "50",
+    },
+    mapboxBannerError: {
+      backgroundColor: colorScheme.warning + "12",
+      borderColor: colorScheme.warning + "50",
+    },
+    mapboxBannerText: {
+      ...fonts.body.sm,
+      flex: 1,
+    },
+    mapboxBannerTextSuccess: {
+      color: colorScheme.success,
+    },
+    mapboxBannerTextError: {
+      color: colorScheme.warning,
     },
     label: {
       ...fonts.body.sm,

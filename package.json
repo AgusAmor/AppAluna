@@ -5,7 +5,8 @@
   "scripts": {
     "start": "expo start",
     "android": "eas build --platform android --profile preview",
-    "ios": "eas update --branch main"
+    "ios": "eas update --branch main",
+    "clear": "npx expo start --clear"
   },
   "dependencies": {
     "@expo-google-fonts/comfortaa": "^0.4.2",
