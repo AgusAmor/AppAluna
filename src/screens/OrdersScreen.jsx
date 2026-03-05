@@ -50,8 +50,8 @@ const OrdersScreen = () => {
     setStatusFilter,
     statusSort,
     setStatusSort,
-    selectedProductId,
-    setSelectedProductId,
+    selectedProductName,
+    setSelectedProductName,
     showFinalized,
     setShowFinalized,
     selectedDeliveryMethod,
@@ -166,8 +166,8 @@ const OrdersScreen = () => {
               {/* Product Filter Select */}
               <View style={styles.selectColumn}>
                 <Select
-                  value={selectedProductId}
-                  onChange={setSelectedProductId}
+                  value={selectedProductName}
+                  onChange={setSelectedProductName}
                   options={productOptions}
                   colorScheme={colorScheme}
                 />

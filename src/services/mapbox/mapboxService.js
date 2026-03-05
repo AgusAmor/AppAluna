@@ -19,7 +19,8 @@ function isValidMatch(feature, query) {
   const queryParts = queryLower
     .split(/[,\s]+/)
     .filter(
-      (p) => p.length > 2 && !["de", "en", "la", "el", "y", "argentina"].includes(p),
+      (p) =>
+        p.length > 2 && !["de", "en", "la", "el", "y", "argentina"].includes(p),
     );
   if (queryParts.length > 0) {
     const hits = queryParts.filter((p) => placeLower.includes(p));
@@ -31,7 +32,11 @@ function isValidMatch(feature, query) {
 /** Geocodes a full address string. */
 async function geocodeAddress(address) {
   if (!MAPBOX_TOKEN) {
-    return { success: false, results: [], error: "Token de Mapbox no configurado" };
+    return {
+      success: false,
+      results: [],
+      error: "Token de Mapbox no configurado",
+    };
   }
   try {
     const encoded = encodeURIComponent(address.trim());
@@ -50,9 +55,17 @@ async function geocodeAddress(address) {
     }
     const valid = data.features
       .filter((f) => isValidMatch(f, address))
-      .map((f) => ({ id: f.id, address: f.place_name, relevance: f.relevance }));
+      .map((f) => ({
+        id: f.id,
+        address: f.place_name,
+        relevance: f.relevance,
+      }));
     if (valid.length === 0) {
-      return { success: false, results: [], message: "Sin coincidencias exactas" };
+      return {
+        success: false,
+        results: [],
+        message: "Sin coincidencias exactas",
+      };
     }
     return { success: true, results: valid };
   } catch (error) {
@@ -70,14 +83,24 @@ function validateAddressMatch(query, resultAddress) {
   const numberMatch = query.match(/\s(\d+)/);
   const queryNumber = numberMatch ? numberMatch[1] : null;
   if (queryNumber && !resultLower.includes(queryNumber)) {
-    return { isValid: false, reason: "La altura no coincide con esta dirección" };
+    return {
+      isValid: false,
+      reason: "La altura no coincide con esta dirección",
+    };
   }
 
   // Check street name (text before the first digit)
   const streetMatch = query.match(/^([^0-9]+)/);
   const queryStreet = streetMatch ? streetMatch[1].trim().toLowerCase() : null;
-  if (queryStreet && queryStreet.length > 2 && !resultLower.includes(queryStreet)) {
-    return { isValid: false, reason: "La calle no coincide con la dirección encontrada" };
+  if (
+    queryStreet &&
+    queryStreet.length > 2 &&
+    !resultLower.includes(queryStreet)
+  ) {
+    return {
+      isValid: false,
+      reason: "La calle no coincide con la dirección encontrada",
+    };
   }
 
   return { isValid: true, reason: null };
@@ -93,17 +116,28 @@ function validateAddressMatch(query, resultAddress) {
  */
 export async function validateAddressObject(addressObj) {
   const { street, number, city, region, postalCode } = addressObj;
-  if (!street?.trim() || !number || !city?.trim() || !region?.trim() || !postalCode?.trim()) {
-    return { status: "error", message: "Completá todos los campos para validar la dirección" };
+  if (
+    !street?.trim() ||
+    !number ||
+    !city?.trim() ||
+    !region?.trim() ||
+    !postalCode?.trim()
+  ) {
+    return {
+      status: "error",
+      message: "Completá todos los campos para validar la dirección",
+    };
   }
 
   // Build query exactly as WebAluna does: street number, city, region postalCode
   const query = `${street.trim()} ${number}, ${city.trim()}, ${region.trim()} ${postalCode.trim()}`;
 
-
   const geocodeResult = await geocodeAddress(query);
   if (!geocodeResult.success || geocodeResult.results.length === 0) {
-    return { status: "error", message: "No encontramos esta dirección. Verificá que sea correcta." };
+    return {
+      status: "error",
+      message: "No encontramos esta dirección. Verificá que sea correcta.",
+    };
   }
 
   const match = validateAddressMatch(query, geocodeResult.results[0].address);
@@ -111,5 +145,8 @@ export async function validateAddressObject(addressObj) {
     return { status: "error", message: match.reason };
   }
 
-  return { status: "success", message: `Dirección validada: ${geocodeResult.results[0].address}` };
+  return {
+    status: "success",
+    message: `Dirección validada: ${geocodeResult.results[0].address}`,
+  };
 }

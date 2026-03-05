@@ -164,7 +164,11 @@ const AddressEditModal = ({
 
     const { street, number, city, region, postalCode } = address || {};
     const allFilled =
-      street?.trim() && number && city?.trim() && region?.trim() && postalCode?.trim();
+      street?.trim() &&
+      number &&
+      city?.trim() &&
+      region?.trim() &&
+      postalCode?.trim();
 
     if (!allFilled) {
       setMapboxStatus(null);
@@ -175,11 +179,23 @@ const AddressEditModal = ({
     setMapboxStatus(null);
 
     mapboxTimeoutRef.current = setTimeout(async () => {
-      const result = await validateAddressObject({ street, number, city, region, postalCode });
+      const result = await validateAddressObject({
+        street,
+        number,
+        city,
+        region,
+        postalCode,
+      });
       setMapboxStatus(result);
       setMapboxValidating(false);
     }, 1500);
-  }, [address?.street, address?.number, address?.city, address?.region, address?.postalCode]);
+  }, [
+    address?.street,
+    address?.number,
+    address?.city,
+    address?.region,
+    address?.postalCode,
+  ]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -454,7 +470,8 @@ const AddressEditModal = ({
               style={[
                 styles.mapboxBanner,
                 mapboxValidating && styles.mapboxBannerValidating,
-                mapboxStatus?.status === "success" && styles.mapboxBannerSuccess,
+                mapboxStatus?.status === "success" &&
+                  styles.mapboxBannerSuccess,
                 mapboxStatus?.status === "error" && styles.mapboxBannerError,
               ]}
             >
@@ -465,7 +482,12 @@ const AddressEditModal = ({
                     color={colorScheme.primary}
                     style={{ marginRight: 8 }}
                   />
-                  <Text style={[styles.mapboxBannerText, { color: colorScheme.primary }]}>
+                  <Text
+                    style={[
+                      styles.mapboxBannerText,
+                      { color: colorScheme.primary },
+                    ]}
+                  >
                     Validando dirección...
                   </Text>
                 </>

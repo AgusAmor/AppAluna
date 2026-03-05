@@ -85,7 +85,7 @@ export function useOrdersFilter(orders, products = []) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState(ORDER_STATUS_FILTERS.ALL);
   const [statusSort, setStatusSort] = useState(STATUS_SORTS.NONE);
-  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [selectedProductName, setSelectedProductName] = useState(null);
   const [showFinalized, setShowFinalized] = useState(true);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(
     DELIVERY_METHOD_FILTERS.ALL,
@@ -126,11 +126,11 @@ export function useOrdersFilter(orders, products = []) {
     }
 
     // Product filter
-    if (selectedProductId) {
+    if (selectedProductName) {
       result = result.filter(
         (order) =>
           order.items &&
-          order.items.some((item) => item.productId === selectedProductId),
+          order.items.some((item) => item.productName === selectedProductName),
       );
     }
 
@@ -179,7 +179,7 @@ export function useOrdersFilter(orders, products = []) {
     searchTerm,
     statusFilter,
     statusSort,
-    selectedProductId,
+    selectedProductName,
     showFinalized,
     selectedDeliveryMethod,
   ]);
@@ -192,8 +192,8 @@ export function useOrdersFilter(orders, products = []) {
     setStatusFilter,
     statusSort,
     setStatusSort,
-    selectedProductId,
-    setSelectedProductId,
+    selectedProductName,
+    setSelectedProductName,
     showFinalized,
     setShowFinalized,
     selectedDeliveryMethod,

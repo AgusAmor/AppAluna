@@ -41,7 +41,7 @@ export const useOrdersFilterOptions = (products) => {
     if (products && products.length > 0) {
       const productOpts = products.map((product) => ({
         label: product.name,
-        value: product.id,
+        value: product.name,
       }));
       return [...baseOptions, ...productOpts];
     }
